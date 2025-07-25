@@ -1,0 +1,32 @@
+{
+  "id": "CJCRMb",
+  "title": "test question",
+  "expires_at": "2025-07-28T23:41:26.823Z",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "type": "scale",
+      "label": "am I good",
+      "options": []
+    },
+    {
+      "type": "yesno",
+      "label": "am I great",
+      "options": []
+    },
+    {
+      "type": "mcq",
+      "label": "test",
+      "options": [
+        "a/b/ccc/d"
+      ]
+    },
+    {
+      "type": "checkbox",
+      "label": "lkmlkm",
+      "options": [
+        "a/b/ccccccc/d/e/f/g/h/i/j"
+      ]
+    }
+  ]
+}
