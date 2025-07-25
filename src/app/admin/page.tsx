@@ -7,10 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/router";
-import fs from "fs";
-import path from "path";
-import { nanoid } from "nanoid";
+
+
+interface Question {
+  type: string;
+  label: string;
+  options: string[];
+}
 
 export default function AdminCreatePage() {
   const [auth, setAuth] = useState("");
@@ -18,12 +21,11 @@ export default function AdminCreatePage() {
   const [title, setTitle] = useState("");
   const [expiration, setExpiration] = useState("");
   const [enforceUnique, setEnforceUnique] = useState(true);
-  const [questions, setQuestions] = useState([
+  const [questions, setQuestions] = useState<Question[]>([
     { type: "yesno", label: "", options: [] },
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState("");
-  const router = useRouter();
 
   const PASSWORD = "hunter2"; // change this
 
@@ -35,11 +37,17 @@ export default function AdminCreatePage() {
     setQuestions([...questions, { type: "text", label: "", options: [] }]);
   }
 
-  function handleQuestionChange(index, key, value) {
+  function handleQuestionChange(index: number, key: keyof Question, value: string | string[]) {
     const updated = [...questions];
-    updated[index][key] = value;
-    if (key === "type" && value !== "mcq" && value !== "checkbox") {
-      updated[index].options = [];
+    if (key === "type") {
+      updated[index].type = value as string;
+      if (value !== "mcq" && value !== "checkbox") {
+        updated[index].options = [];
+      }
+    } else if (key === "label") {
+      updated[index].label = value as string;
+    } else if (key === "options") {
+      updated[index].options = value as string[];
     }
     setQuestions(updated);
   }
@@ -85,7 +93,7 @@ export default function AdminCreatePage() {
             <Input
               type="password"
               value={auth}
-              onChange={(e) => setAuth(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuth(e.target.value)}
               className="mb-4"
             />
             <Button onClick={handleLogin} className="w-full">
@@ -102,14 +110,14 @@ export default function AdminCreatePage() {
         <h1 className="text-2xl font-semibold mb-6">Create New Feedback Page</h1>
         <div className="mb-4">
           <Label>Title</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
         </div>
         <div className="mb-4">
           <Label>Expiration (ISO or hours e.g. 72h)</Label>
-          <Input
-            value={expiration}
-            onChange={(e) => setExpiration(e.target.value)}
-          />
+                      <Input
+              value={expiration}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpiration(e.target.value)}
+            />
         </div>
         <div className="mb-4">
           <Label className="flex items-center gap-2">
@@ -129,7 +137,7 @@ export default function AdminCreatePage() {
                 className="mb-2"
                 value={q.label}
                 placeholder="Question text"
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleQuestionChange(i, "label", e.target.value)
                 }
               />
@@ -152,7 +160,7 @@ export default function AdminCreatePage() {
                   className="mt-1"
                   placeholder="Option 1\nOption 2\nOption 3"
                   value={q.options.join("\n")}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     handleQuestionChange(i, "options", e.target.value.split("\n"))
                   }
                 />

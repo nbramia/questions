@@ -60,8 +60,8 @@ export async function POST(req: Request) {
 
     const tree = blobs.map((b) => ({
       path: b.path,
-      mode: "100644",
-      type: "blob",
+      mode: "100644" as const,
+      type: "blob" as const,
       sha: b.sha,
     }));
 
