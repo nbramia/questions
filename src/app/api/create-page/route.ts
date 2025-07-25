@@ -8,7 +8,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const GITHUB_REPO = "nbramia/questions"; 
 const GITHUB_BRANCH = "main";
 const TEMPLATE_PATH = "public/template/index.html";
-const TARGET_PATH = "public/question";
+const TARGET_PATH = "docs/question";
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
