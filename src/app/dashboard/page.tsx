@@ -173,7 +173,7 @@ export default function AdminDashboard() {
               variant="outline"
               className="cursor-pointer"
             >
-              Logout
+              Log Out
             </Button>
             <Button 
               onClick={() => window.location.href = '/create'}

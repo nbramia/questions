@@ -30,7 +30,6 @@ export default function RootPage() {
       <div className="min-h-screen flex items-center justify-center font-sans bg-gray-50">
         <Card className="p-6 w-full max-w-sm">
           <CardContent>
-            <CardTitle className="mb-4 text-center">Admin Access</CardTitle>
             <Label className="mb-2 block">Password</Label>
             <Input
               type="password"
@@ -56,9 +55,9 @@ export default function RootPage() {
     <div className="min-h-screen flex items-center justify-center font-sans bg-gray-50">
       <Card className="p-6 w-full max-w-md">
         <CardContent>
-          <CardTitle className="mb-4 text-center">Welcome to Questions</CardTitle>
+          <CardTitle className="mb-4 text-center">Welcome</CardTitle>
           <p className="text-gray-600 text-center mb-6">
-            Manage your feedback forms and create new ones.
+            Manage feedback forms and create new ones.
           </p>
           <div className="space-y-3">
             <Button 
@@ -82,7 +81,7 @@ export default function RootPage() {
               variant="outline"
               className="w-full cursor-pointer"
             >
-              Logout
+              Log Out
             </Button>
           </div>
         </CardContent>

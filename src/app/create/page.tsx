@@ -866,7 +866,7 @@ export default function AdminCreatePage() {
               variant="outline"
               className="cursor-pointer"
             >
-              Logout
+              Log Out
             </Button>
             <Button 
               onClick={() => window.location.href = '/dashboard'}
