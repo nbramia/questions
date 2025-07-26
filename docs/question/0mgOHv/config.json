@@ -1,0 +1,15 @@
+{
+  "id": "0mgOHv",
+  "title": "kmlkmlkm",
+  "description": "",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "yesno",
+      "label": "jhbhjb",
+      "options": []
+    }
+  ],
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycbw-Z6SioFKc3QSrSoQBNr817ZpQOE-ZavsFZYPs3ypmccX9-o5PaeuYHndLo9jpd0RefA/exec"
+}
