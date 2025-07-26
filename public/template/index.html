@@ -132,6 +132,7 @@
 
           const submission = {
             question_id: cfg.id,
+            form_title: cfg.title,
             timestamp: new Date().toISOString(),
             answers: entries,
             ip,
@@ -139,7 +140,7 @@
           };
 
           try {
-            const res = await fetch("https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec", {
+            const res = await fetch(cfg.googleScriptUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(submission),

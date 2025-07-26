@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       expires_at: parseExpiration(expiration),
       enforceUnique,
       questions,
+      googleScriptUrl: process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec",
     }, null, 2);
 
     const templatePath = path.join(process.cwd(), TEMPLATE_PATH);
