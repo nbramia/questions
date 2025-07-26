@@ -707,7 +707,16 @@ export default function AdminCreatePage() {
   return (
     <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900">Create New Feedback Page</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Create New Feedback Page</h1>
+          <Button 
+            onClick={() => window.location.href = '/'}
+            variant="outline"
+            className="cursor-pointer"
+          >
+            Dashboard
+          </Button>
+        </div>
         
         {/* Form Configuration Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
