@@ -140,15 +140,14 @@
           };
 
           try {
-            // Use CORS proxy to avoid CORS issues
-            const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-            const res = await fetch(proxyUrl + cfg.googleScriptUrl, {
+            // Use our custom proxy to avoid CORS issues
+            const res = await fetch("/api/proxy", {
               method: "POST",
-              headers: { 
-                "Content-Type": "application/json",
-                "Origin": "https://nbramia.github.io"
-              },
-              body: JSON.stringify(submission),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: cfg.googleScriptUrl,
+                data: submission
+              }),
             });
 
             if (res.ok) {
