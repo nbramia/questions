@@ -1,10 +1,11 @@
 {
   "id": "ohasK3",
   "title": "gfcgfc",
-  "description": "testy test. this here's my description. testy test. this here's my description. testy test. this here's my description. testy test. this here's my description. testy test. this here's my description. ",
+  "description": "testy test - this is my description. testy test - this is my description. testy test - this is my description. testy test - this is my description. testy test - this is my description. testy test - this is my description. testy test ",
   "enforceUnique": false,
   "questions": [
     {
+      "id": "q1753565500805",
       "type": "checkbox",
       "label": "checky",
       "options": [
@@ -14,6 +15,7 @@
       ]
     },
     {
+      "id": "q1753565500805",
       "type": "likert",
       "label": "lik",
       "options": [
@@ -25,16 +27,11 @@
       ]
     },
     {
+      "id": "q1753565500805",
       "type": "scale",
       "label": "scaly",
       "options": [],
-      "scaleRange": 10,
-      "skipLogic": {
-        "enabled": false,
-        "dependsOn": "",
-        "condition": "equals",
-        "value": ""
-      }
+      "scaleRange": 10
     }
   ],
   "googleScriptUrl": "https://script.google.com/macros/s/AKfycbw-Z6SioFKc3QSrSoQBNr817ZpQOE-ZavsFZYPs3ypmccX9-o5PaeuYHndLo9jpd0RefA/exec"
