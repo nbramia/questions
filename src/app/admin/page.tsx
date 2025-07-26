@@ -928,17 +928,6 @@ export default function AdminCreatePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </button>
-                {qrCodeData && (
-                  <button
-                    onClick={downloadQRCode}
-                    className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded-md transition-colors cursor-pointer"
-                    title="Download QR code"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                    </svg>
-                  </button>
-                )}
               </div>
             </div>
             
@@ -966,14 +955,27 @@ export default function AdminCreatePage() {
                 </div>
               )}
               
-              {/* QR Code Display */}
+              {/* QR Code and Download Button */}
               {qrCodeData && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 flex items-center gap-2">
                   <div 
-                    className="w-16 h-16 cursor-pointer hover:opacity-80 transition-opacity bg-white p-1 rounded border"
+                    className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity bg-white p-1 rounded border flex items-center justify-center"
                     onClick={() => setShowQRModal(true)}
-                    dangerouslySetInnerHTML={{ __html: qrCodeData }}
-                  />
+                    title="Click to view QR code"
+                  >
+                    <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zM5 20h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
+                    </svg>
+                  </div>
+                  <button
+                    onClick={downloadQRCode}
+                    className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded-md transition-colors cursor-pointer"
+                    title="Download QR code"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
@@ -983,34 +985,38 @@ export default function AdminCreatePage() {
         {/* QR Code Expanded Modal */}
         {showQRModal && qrCodeData && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4"
             onClick={() => setShowQRModal(false)}
           >
             <div 
-              className="bg-white rounded-lg p-8 max-w-lg w-full"
+              className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">QR Code</h3>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">QR Code</h3>
                 <button
                   onClick={() => setShowQRModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
               
-              <div className="flex flex-col items-center">
-                <div 
-                  className="w-80 h-80 mb-4"
-                  dangerouslySetInnerHTML={{ __html: qrCodeData }}
-                />
-                <p className="text-sm text-gray-600 text-center mb-4">
+              <div className="p-6">
+                <div className="flex justify-center mb-6">
+                  <div 
+                    className="w-80 h-80 bg-white p-6 rounded-lg border border-gray-200 flex items-center justify-center"
+                    dangerouslySetInnerHTML={{ __html: qrCodeData }}
+                  />
+                </div>
+                
+                <p className="text-sm text-gray-600 text-center mb-6">
                   Scan this QR code to open the form directly
                 </p>
-                <div className="flex gap-3">
+                
+                <div className="flex gap-3 justify-center">
                   <button
                     onClick={downloadQRCode}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors cursor-pointer flex items-center gap-2"
