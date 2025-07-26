@@ -28,7 +28,13 @@
       "type": "scale",
       "label": "scaly",
       "options": [],
-      "scaleRange": 10
+      "scaleRange": 10,
+      "skipLogic": {
+        "enabled": false,
+        "dependsOn": "",
+        "condition": "equals",
+        "value": ""
+      }
     }
   ],
   "googleScriptUrl": "https://script.google.com/macros/s/AKfycbw-Z6SioFKc3QSrSoQBNr817ZpQOE-ZavsFZYPs3ypmccX9-o5PaeuYHndLo9jpd0RefA/exec"
