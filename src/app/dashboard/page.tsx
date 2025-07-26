@@ -294,6 +294,10 @@ export default function AdminDashboard() {
           return new Date(b.updated_at || b.created_at || '').getTime() - new Date(a.updated_at || a.created_at || '').getTime();
         case "responses":
           return (b.totalResponses || 0) - (a.totalResponses || 0);
+        case "name-asc":
+          return (a.title || '').localeCompare(b.title || '');
+        case "name-desc":
+          return (b.title || '').localeCompare(a.title || '');
         default:
           return 0;
       }
@@ -382,6 +386,8 @@ export default function AdminDashboard() {
                     <option value="created">Most Recently Created</option>
                     <option value="updated">Most Recently Updated</option>
                     <option value="responses">Most Recent Response</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
                   </select>
                   <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-300 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

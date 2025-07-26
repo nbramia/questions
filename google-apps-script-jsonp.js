@@ -159,34 +159,81 @@ function getOrCreateSheet(spreadsheet, questionId, data) {
 
 function getResponsesForForm(formId) {
   try {
+    console.log(`getResponsesForForm called with formId: ${formId}`);
+    
     // Get the spreadsheet - use the same ID as in your main function
     const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; // Replace with your actual spreadsheet ID
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     
-    // Try to get the sheet for this form
-    const sheet = spreadsheet.getSheetByName(formId);
+    console.log(`Opened spreadsheet with ID: ${spreadsheetId}`);
+    
+    // Get all sheet names for debugging
+    const allSheets = spreadsheet.getSheets();
+    const sheetNames = allSheets.map(sheet => sheet.getName());
+    console.log(`All sheet names: ${sheetNames.join(', ')}`);
+    
+    // Try to get the form config to find the title
+    let formTitle = formId; // fallback to formId if we can't get the title
+    try {
+      const configUrl = `https://nbramia.github.io/questions/question/${formId}/config.json`;
+      console.log(`Fetching config from: ${configUrl}`);
+      
+      const configResponse = UrlFetchApp.fetch(configUrl);
+      if (configResponse.getResponseCode() === 200) {
+        const config = JSON.parse(configResponse.getContentText());
+        formTitle = config.title || formId;
+        console.log(`Found form title: ${formTitle}`);
+      } else {
+        console.log(`Failed to fetch config, using formId as fallback`);
+      }
+    } catch (configError) {
+      console.log(`Error fetching config: ${configError}, using formId as fallback`);
+    }
+    
+    // Try to get the sheet for this form by title first, then by ID as fallback
+    let sheet = spreadsheet.getSheetByName(formTitle);
+    if (!sheet) {
+      console.log(`Sheet not found for formTitle: ${formTitle}, trying formId: ${formId}`);
+      sheet = spreadsheet.getSheetByName(formId);
+    }
     
     if (!sheet) {
+      console.log(`Sheet not found for either formTitle: ${formTitle} or formId: ${formId}`);
       // No responses for this form yet
       return ContentService
         .createTextOutput(JSON.stringify({ 
           totalResponses: 0, 
           lastResponseAt: null, 
-          responses: [] 
+          responses: [],
+          debug: {
+            formId: formId,
+            formTitle: formTitle,
+            availableSheets: sheetNames
+          }
         }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    console.log(`Found sheet: ${sheet.getName()}`);
+    
     // Get all data from the sheet
     const data = sheet.getDataRange().getValues();
+    console.log(`Sheet has ${data.length} rows of data`);
     
     if (data.length <= 1) {
       // Only header row or empty sheet
+      console.log(`Sheet has only header row or is empty`);
       return ContentService
         .createTextOutput(JSON.stringify({ 
           totalResponses: 0, 
           lastResponseAt: null, 
-          responses: [] 
+          responses: [],
+          debug: {
+            formId: formId,
+            formTitle: formTitle,
+            sheetName: sheet.getName(),
+            rowCount: data.length
+          }
         }))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -200,6 +247,7 @@ function getResponsesForForm(formId) {
       const timestamps = data.slice(1).map(row => new Date(row[0]));
       const latestTimestamp = new Date(Math.max(...timestamps.map(d => d.getTime())));
       lastResponseAt = latestTimestamp.toISOString();
+      console.log(`Found ${totalResponses} responses, latest at: ${lastResponseAt}`);
     }
     
     return ContentService
@@ -211,7 +259,13 @@ function getResponsesForForm(formId) {
           ip: row[1],
           userAgent: row[2],
           // Include other columns as needed
-        }))
+        })),
+        debug: {
+          formId: formId,
+          formTitle: formTitle,
+          sheetName: sheet.getName(),
+          rowCount: data.length
+        }
       }))
       .setMimeType(ContentService.MimeType.JSON);
       
@@ -222,7 +276,11 @@ function getResponsesForForm(formId) {
         error: error.toString(),
         totalResponses: 0, 
         lastResponseAt: null, 
-        responses: [] 
+        responses: [],
+        debug: {
+          formId: formId,
+          error: error.toString()
+        }
       }))
       .setMimeType(ContentService.MimeType.JSON);
   }
