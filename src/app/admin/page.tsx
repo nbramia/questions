@@ -311,7 +311,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
           {/* Skip Logic - moved after options for MCQ, checkbox, scale, and Likert */}
           {i > 0 && (
             <div className="border-t pt-4">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <Switch
                   checked={q.skipLogic?.enabled || false}
                   onCheckedChange={(enabled: boolean) => {
@@ -322,7 +322,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                     handleQuestionChange(i, "skipLogic", skipLogic);
                   }}
                 />
-                <Label className="text-sm font-medium text-gray-700 cursor-pointer" onClick={() => {
+                <Label className="block text-sm font-medium text-gray-700 cursor-pointer" onClick={() => {
                   const enabled = !(q.skipLogic?.enabled || false);
                   const skipLogic = enabled 
                     ? { enabled: true, dependsOn: questions[0].id, condition: "equals", value: "" }
@@ -336,7 +336,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
               {q.skipLogic?.enabled && (
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-xs text-gray-500">Question</Label>
+                    <Label className="block text-sm font-medium text-gray-700 mb-2">Question</Label>
                     <div className="relative">
                       <select
                         className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
@@ -361,7 +361,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                   </div>
                   
                   <div>
-                    <Label className="text-xs text-gray-500">Condition</Label>
+                    <Label className="block text-sm font-medium text-gray-700 mb-2">Condition</Label>
                     <div className="relative">
                       <select
                         className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
@@ -386,7 +386,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                   </div>
                   
                   <div>
-                    <Label className="text-xs text-gray-500">Value</Label>
+                    <Label className="block text-sm font-medium text-gray-700 mb-2">Value</Label>
                     {referencedQuestion?.type === "text" ? (
                       <Input
                         value={q.skipLogic?.value || ""}
@@ -708,7 +708,7 @@ export default function AdminCreatePage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Questions</h2>
-            <Button onClick={handleAddQuestion} className="bg-blue-200 text-blue-700 border-blue-200 hover:bg-blue-700 cursor-pointer" size="sm">
+            <Button onClick={handleAddQuestion} className="bg-blue-200 text-blue-700 border-blue-200 hover:bg-blue-300 cursor-pointer" size="sm">
               + Add Question
             </Button>
           </div>
