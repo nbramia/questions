@@ -14,6 +14,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -45,7 +46,7 @@ interface SortableQuestionProps {
   question: Question;
   index: number;
   questions: Question[];
-  handleQuestionChange: (index: number, key: keyof Question, value: string | string[] | number | any) => void;
+  handleQuestionChange: (index: number, key: keyof Question, value: string | string[] | number | Question['skipLogic']) => void;
   onRemove: () => void;
 }
 
@@ -457,10 +458,10 @@ export default function AdminCreatePage() {
     })
   );
 
-  function handleDragEnd(event: any) {
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
-    if (active.id !== over?.id) {
+    if (active.id !== over?.id && over) {
       setQuestions((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
@@ -492,7 +493,11 @@ export default function AdminCreatePage() {
     setQuestions([...questions, { id: newId, type: "text", label: "", options: [] }]);
   }
 
-  function handleQuestionChange(index: number, key: keyof Question, value: string | string[] | number | any) {
+  function handleQuestionChange(
+    index: number, 
+    key: keyof Question, 
+    value: string | string[] | number | Question['skipLogic']
+  ) {
     const updated = [...questions];
     if (key === "type") {
       updated[index].type = value as string;
@@ -541,7 +546,9 @@ export default function AdminCreatePage() {
         }
       });
     } else if (key === "skipLogic") {
-      updated[index].skipLogic = value;
+      if (typeof value === 'object' && value !== null && 'enabled' in value) {
+        updated[index].skipLogic = value as Question['skipLogic'];
+      }
     }
     setQuestions(updated);
   }

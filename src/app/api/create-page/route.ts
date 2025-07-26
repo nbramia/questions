@@ -4,11 +4,21 @@ import { nanoid } from "nanoid";
 import { readFile } from "fs/promises";
 import path from "path";
 
+interface FormConfig {
+  id: string;
+  title: string;
+  description?: string;
+  enforceUnique: boolean;
+  questions: any[];
+  googleScriptUrl: string;
+  expires_at?: string;
+}
+
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const GITHUB_REPO = "nbramia/questions"; 
 const GITHUB_BRANCH = "main";
 const TEMPLATE_PATH = "public/template/index.html";
-const TARGET_PATH = "docs/questions"; // Updated path without "question"
+const TARGET_PATH = "docs/questions"; 
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
@@ -28,7 +38,7 @@ export async function POST(req: Request) {
     console.log("Creating form with ID:", id);
 
     const parsedExpiration = parseExpiration(expiration);
-    const config: any = {
+    const config: FormConfig = {
       id,
       title,
       description,
@@ -113,7 +123,7 @@ export async function POST(req: Request) {
       sha: commit.sha,
     });
 
-    // Updated link for new URL structure
+    // URL structure
     const link = `https://ramia.us/questions/${id}/`;
     console.log("Success! Link:", link);
     return NextResponse.json({ link });
