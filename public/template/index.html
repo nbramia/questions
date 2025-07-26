@@ -19,9 +19,9 @@
       }
     </style>
   </head>
-  <body class="bg-gray-50 min-h-screen px-8 pt-12 pb-8">
+  <body class="bg-gray-50 min-h-screen px-4 sm:px-8 pt-12 pb-24">
     <div class="max-w-2xl mx-auto">
-      <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-8">
+      <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-4 sm:p-8">
         <h1 id="form-title" class="text-3xl font-bold mb-6 text-gray-900">Loading...</h1>
         <div id="form-description" class="text-gray-600 mb-8 text-lg hidden"></div>
         <form id="feedback-form" class="space-y-8"></form>
@@ -147,7 +147,7 @@
           const questionCard = document.createElement("div");
           const bgColor = getQuestionBackgroundColor(q.type);
           console.log(`Question ${i + 1} (${q.type}): background color = ${bgColor}`);
-          questionCard.className = `p-6 border border-gray-200 shadow-sm rounded-lg ${bgColor}`;
+          questionCard.className = `p-4 sm:p-6 border border-gray-200 shadow-sm rounded-lg ${bgColor} overflow-auto`;
           questionCard.setAttribute("data-question-id", q.id || `q${i}`);
           
           const questionContent = document.createElement("div");
@@ -162,7 +162,7 @@
           if (q.type === "text") {
             const input = document.createElement("textarea");
             input.name = q.id || `q${i}`;
-            input.className = "w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[120px] resize-vertical";
+            input.className = "w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-h-[120px] resize-vertical text-base";
             input.placeholder = "Enter your response...";
             questionContent.appendChild(input);
           } else if (q.type === "yesno") {
@@ -171,7 +171,7 @@
             
             ["Yes", "No"].forEach((val) => {
               const opt = document.createElement("div");
-              opt.className = "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer";
+              opt.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               opt.innerHTML = `
                 <input type="radio" name="${q.id || `q${i}`}" value="${val}" class="form-radio">
                 <span class="text-gray-700 font-medium">${val}</span>
@@ -194,7 +194,7 @@
             
             q.options.forEach((opt) => {
               const el = document.createElement("div");
-              el.className = "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer";
+              el.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               el.innerHTML = `
                 <input type="radio" name="${q.id || `q${i}`}" value="${opt}" class="form-radio">
                 <span class="text-gray-700 font-medium">${opt}</span>
@@ -217,7 +217,7 @@
             
             q.options.forEach((opt) => {
               const el = document.createElement("div");
-              el.className = "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer";
+              el.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               el.innerHTML = `
                 <input type="radio" name="${q.id || `q${i}`}" value="${opt}" class="form-radio">
                 <span class="text-gray-700 font-medium">${opt}</span>
@@ -240,7 +240,7 @@
             
             q.options.forEach((opt) => {
               const el = document.createElement("div");
-              el.className = "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer";
+              el.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               el.innerHTML = `
                 <input type="checkbox" name="${q.id || `q${i}`}" value="${opt}" class="form-checkbox">
                 <span class="text-gray-700 font-medium">${opt}</span>
@@ -390,7 +390,7 @@
         
         const submitBtn = document.createElement("button");
         submitBtn.textContent = "Submit";
-        submitBtn.className = "w-full bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-md font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
+        submitBtn.className = "w-full bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-md font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-[44px]";
         submitBtn.type = "submit";
         submitContainer.appendChild(submitBtn);
         form.appendChild(submitContainer);
@@ -464,7 +464,7 @@
                 if (submitBtn) {
                   submitBtn.disabled = false;
                   submitBtn.textContent = "Submit";
-                  submitBtn.className = "w-full bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-md font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
+                  submitBtn.className = "w-full bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-md font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-[44px]";
                 }
               }
               // Clean up
@@ -491,7 +491,7 @@
                 if (submitBtn) {
                   submitBtn.disabled = false;
                   submitBtn.textContent = "Submit";
-                  submitBtn.className = "w-full bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-md font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
+                  submitBtn.className = "w-full bg-blue-700 hover:bg-blue-800 text-white px-8 py-4 rounded-md font-medium text-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-[44px]";
                 }
                 
                 delete window[callbackName];
@@ -526,17 +526,23 @@
         }
 
         // Get the current value of the dependent question
-        const dependentInput = form.querySelector(`[name="${q.skipLogic.dependsOn}"], [name="q${cfg.questions.indexOf(dependentQuestion)}"]`);
+        const dependentInput = form.querySelector(`[name="${q.skipLogic.dependsOn}"]`) || 
+                              form.querySelector(`[name="q${cfg.questions.indexOf(dependentQuestion)}"]`);
         if (!dependentInput) {
           return false; // Hide if dependent input not found
         }
 
         let currentValue = "";
-        if (dependentInput.type === "radio" || dependentInput.type === "checkbox") {
+        if (dependentInput.type === "radio") {
           const checkedInput = form.querySelector(`[name="${dependentInput.name}"]:checked`);
           currentValue = checkedInput ? checkedInput.value : "";
+        } else if (dependentInput.type === "checkbox") {
+          const checkedInputs = form.querySelectorAll(`[name="${dependentInput.name}"]:checked`);
+          const selectedValues = Array.from(checkedInputs).map(input => input.value);
+          currentValue = selectedValues.join(", ");
         } else {
-          currentValue = dependentInput.value;
+          // For text, textarea, scale, and other input types
+          currentValue = dependentInput.value || "";
         }
 
         // Apply condition

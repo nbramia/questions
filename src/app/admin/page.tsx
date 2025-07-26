@@ -136,7 +136,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={`p-6 border border-gray-200 shadow-sm ${
+      <Card className={`p-4 sm:p-6 border border-gray-200 shadow-sm ${
         q.type === "text" ? "bg-yellow-50" :
         q.type === "yesno" ? "bg-pink-50" :
         q.type === "mcq" ? "bg-blue-50" :
@@ -649,12 +649,12 @@ export default function AdminCreatePage() {
     );
 
   return (
-    <div className="min-h-screen px-8 pt-12 pb-8 font-sans bg-gray-50">
+    <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-gray-900">Create New Feedback Page</h1>
         
         {/* Form Configuration Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
           <h2 className="text-xl font-semibold mb-6 text-gray-800">Form Details</h2>
           
           <div className="space-y-6">
@@ -681,7 +681,7 @@ export default function AdminCreatePage() {
         </div>
 
         {/* Settings Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
           <h2 className="text-xl font-semibold mb-6 text-gray-800">Form Settings</h2>
           
           <div className="space-y-6">
@@ -736,7 +736,7 @@ export default function AdminCreatePage() {
         </div>
 
         {/* Questions Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Questions</h2>
             <Button onClick={handleAddQuestion} className="bg-blue-200 text-blue-700 border-blue-200 hover:bg-blue-300 cursor-pointer" size="sm">
@@ -773,7 +773,7 @@ export default function AdminCreatePage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8">
           <div className="flex items-center justify-between">
             <div className="text-sm">
               {questions.length} question{questions.length !== 1 ? 's' : ''} • {
