@@ -140,15 +140,43 @@
           };
 
           try {
-            // Use our custom proxy to avoid CORS issues
-            const res = await fetch("/api/proxy", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                url: cfg.googleScriptUrl,
-                data: submission
-              }),
+            // Call Google Apps Script directly with JSONP approach
+            const script = document.createElement('script');
+            const callbackName = 'callback_' + Date.now();
+            
+            // Create a global callback function
+            window[callbackName] = function(response) {
+              if (response.success) {
+                markSubmitted(cfg.id);
+                form.classList.add("hidden");
+                submittedMsg.classList.remove("hidden");
+              } else {
+                errorMsg.classList.remove("hidden");
+              }
+              // Clean up
+              delete window[callbackName];
+              document.head.removeChild(script);
+            };
+            
+            // Create the JSONP request
+            const params = new URLSearchParams({
+              callback: callbackName,
+              data: JSON.stringify(submission)
             });
+            
+            script.src = cfg.googleScriptUrl + '?' + params.toString();
+            document.head.appendChild(script);
+            
+            // Set a timeout in case the script doesn't load
+            setTimeout(() => {
+              if (window[callbackName]) {
+                errorMsg.classList.remove("hidden");
+                delete window[callbackName];
+                document.head.removeChild(script);
+              }
+            }, 10000);
+            
+            return; // Don't continue with the rest of the function
 
             if (res.ok) {
               markSubmitted(cfg.id);
