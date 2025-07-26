@@ -60,9 +60,19 @@
         formTitle.textContent = cfg.title;
 
         const now = new Date();
-        if (cfg.expires_at) {
+        console.log("Form config:", cfg);
+        console.log("Expires at:", cfg.expires_at);
+        console.log("Current time:", now.toISOString());
+        
+        if (cfg.expires_at && cfg.expires_at !== null && cfg.expires_at !== "") {
           const exp = new Date(cfg.expires_at);
-          if (now > exp) return disableForm();
+          console.log("Expiration time:", exp.toISOString());
+          if (now > exp) {
+            console.log("Form expired, disabling...");
+            return disableForm();
+          }
+        } else {
+          console.log("No expiration set, form will never expire");
         }
         if (cfg.enforceUnique && hasSubmitted(cfg.id)) return disableForm();
 

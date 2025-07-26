@@ -27,14 +27,21 @@ export async function POST(req: Request) {
 
     console.log("Creating form with ID:", id);
 
-    const configContent = JSON.stringify({
+    const parsedExpiration = parseExpiration(expiration);
+    const config: any = {
       id,
       title,
-      expires_at: parseExpiration(expiration),
       enforceUnique,
       questions,
       googleScriptUrl: process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec",
-    }, null, 2);
+    };
+    
+    // Only include expires_at if there's actually an expiration
+    if (parsedExpiration !== null) {
+      config.expires_at = parsedExpiration;
+    }
+    
+    const configContent = JSON.stringify(config, null, 2);
 
     const templatePath = path.join(process.cwd(), TEMPLATE_PATH);
     const templateHtml = await readFile(templatePath, "utf-8");
