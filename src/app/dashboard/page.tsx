@@ -23,6 +23,9 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [updatingForms, setUpdatingForms] = useState<{[key: string]: number}>({}); // Track countdown for each form
+  const [qrCodeData, setQRCodeData] = useState<{[key: string]: string}>({}); // Track QR codes for each form
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [currentQRForm, setCurrentQRForm] = useState<string | null>(null);
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
@@ -50,6 +53,62 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }, []);
+
+  // Function to generate QR code for a form
+  const generateQRCode = useCallback(async (formUrl: string, formId: string) => {
+    try {
+      const QRCode = (await import('qrcode-svg')).default;
+      const qr = new QRCode({
+        content: formUrl,
+        padding: 4,
+        width: 256,
+        height: 256,
+        color: "#000000",
+        background: "#ffffff",
+        ecl: "M"
+      });
+      setQRCodeData(prev => ({ ...prev, [formId]: qr.svg() }));
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  }, []);
+
+  // Function to download QR code as PNG
+  const downloadQRCode = useCallback((formId: string) => {
+    const qrData = qrCodeData[formId];
+    if (!qrData) return;
+    
+    // Create a canvas to convert SVG to PNG
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    // Set canvas size
+    canvas.width = 512;
+    canvas.height = 512;
+    
+    img.onload = () => {
+      // Fill white background
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the QR code
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Download as PNG
+        const link = document.createElement('a');
+        link.download = `qrcode-${formId}-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+    };
+    
+    // Convert SVG to data URL
+    const svgBlob = new Blob([qrData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    img.src = url;
+  }, [qrCodeData]);
 
   useEffect(() => {
     if (authenticated) {
@@ -289,6 +348,24 @@ export default function AdminDashboard() {
                     
                     <Button
                       onClick={async () => {
+                        if (!qrCodeData[form.id]) {
+                          await generateQRCode(form.url, form.id);
+                        }
+                        setCurrentQRForm(form.id);
+                        setShowQRModal(true);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zM5 20h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
+                      </svg>
+                      QR Code
+                    </Button>
+                    
+                    <Button
+                      onClick={async () => {
                         try {
                           // Fetch the form config to get the data
                           const response = await fetch(`/api/forms/${form.id}`);
@@ -459,6 +536,62 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* QR Code Expanded Modal */}
+        {showQRModal && currentQRForm && qrCodeData[currentQRForm] && (
+          <div 
+            className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowQRModal(false)}
+          >
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">QR Code</h3>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="flex justify-center mb-6">
+                  <div 
+                    className="w-80 h-80 bg-white p-6 rounded-lg border border-gray-200 flex items-center justify-center"
+                    dangerouslySetInnerHTML={{ __html: qrCodeData[currentQRForm] }}
+                  />
+                </div>
+                
+                <p className="text-sm text-gray-600 dark:text-gray-300 text-center mb-6">
+                  Scan this QR code to open the form directly
+                </p>
+                
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={() => downloadQRCode(currentQRForm)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors cursor-pointer flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    Download PNG
+                  </button>
+                  <button
+                    onClick={() => setShowQRModal(false)}
+                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md font-medium transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

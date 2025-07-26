@@ -146,7 +146,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
         q.type === "scale" ? "bg-purple-50" :
         q.type === "likert" ? "bg-orange-50" :
         "bg-white"
-      }`}>
+      }`} style={{ opacity: 1, filter: 'none' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div 
@@ -599,7 +599,17 @@ export default function AdminCreatePage() {
           
           // Pre-populate questions if they exist
           if (formData.questions && Array.isArray(formData.questions)) {
-            setQuestions(formData.questions);
+            console.log('Loading questions for edit:', formData.questions);
+            // Ensure all questions have the required properties
+            const normalizedQuestions = formData.questions.map((q: any) => ({
+              id: q.id || `q${Date.now()}`,
+              type: q.type || "text",
+              label: q.label || "",
+              options: q.options || [],
+              scaleRange: q.scaleRange,
+              skipLogic: q.skipLogic
+            }));
+            setQuestions(normalizedQuestions);
           }
           
           // Clear the URL parameter
@@ -1067,7 +1077,7 @@ export default function AdminCreatePage() {
         </div>
 
         {result && (
-          <div className="mt-6 p-6 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
+          <div className="mt-6 p-6 bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-green-500 rounded-lg">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -1076,8 +1086,8 @@ export default function AdminCreatePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">Form Created Successfully!</h3>
-                  <p className="text-green-700 dark:text-green-300 mt-1">Your form has been deployed; it may take a moment for it to become available.</p>
+                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-400">Form Created Successfully!</h3>
+                  <p className="text-green-700 dark:text-green-400 mt-1">Your form has been deployed; it may take a moment for it to become available.</p>
                 </div>
               </div>
               
@@ -1116,7 +1126,7 @@ export default function AdminCreatePage() {
                       console.error('Failed to copy link:', err);
                     }
                   }}
-                  className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded-md transition-colors cursor-pointer"
+                  className="p-2 text-gray-500 dark:text-white hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900 rounded-md transition-colors cursor-pointer"
                   data-copy-button
                   title="Copy link to clipboard"
                 >
@@ -1165,7 +1175,7 @@ export default function AdminCreatePage() {
                   </div>
                   <button
                     onClick={downloadQRCode}
-                    className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900 rounded-md transition-colors cursor-pointer"
+                    className="p-2 text-gray-500 dark:text-white hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900 rounded-md transition-colors cursor-pointer"
                     title="Download QR code"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
