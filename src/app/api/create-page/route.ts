@@ -8,7 +8,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const GITHUB_REPO = "nbramia/questions"; 
 const GITHUB_BRANCH = "main";
 const TEMPLATE_PATH = "public/template/index.html";
-const TARGET_PATH = "docs/question";
+const TARGET_PATH = "docs/questions"; // Updated path without "question"
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
@@ -113,7 +113,8 @@ export async function POST(req: Request) {
       sha: commit.sha,
     });
 
-    const link = `https://${owner}.github.io/${repo}/question/${id}/`;
+    // Updated link for new URL structure
+    const link = `https://ramia.us/questions/${id}/`;
     console.log("Success! Link:", link);
     return NextResponse.json({ link });
   } catch (err) {
