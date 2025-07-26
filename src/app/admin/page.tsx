@@ -13,6 +13,7 @@ interface Question {
   type: string;
   label: string;
   options: string[];
+  scaleRange?: number;
 }
 
 export default function AdminCreatePage() {
@@ -40,17 +41,33 @@ export default function AdminCreatePage() {
     setQuestions([...questions, { type: "text", label: "", options: [] }]);
   }
 
-  function handleQuestionChange(index: number, key: keyof Question, value: string | string[]) {
+  function handleQuestionChange(index: number, key: keyof Question, value: string | string[] | number) {
     const updated = [...questions];
     if (key === "type") {
       updated[index].type = value as string;
-      if (value !== "mcq" && value !== "checkbox") {
+      if (value !== "mcq" && value !== "checkbox" && value !== "likert") {
         updated[index].options = [];
+      }
+      if (value === "scale") {
+        updated[index].scaleRange = 5; // Default to 1-5
+      } else {
+        updated[index].scaleRange = undefined;
+      }
+      if (value === "likert") {
+        updated[index].options = [
+          "Strongly agree",
+          "Somewhat agree", 
+          "Neither agree nor disagree",
+          "Somewhat disagree",
+          "Strongly disagree"
+        ];
       }
     } else if (key === "label") {
       updated[index].label = value as string;
     } else if (key === "options") {
       updated[index].options = value as string[];
+    } else if (key === "scaleRange") {
+      updated[index].scaleRange = value as number;
     }
     setQuestions(updated);
   }
@@ -61,7 +78,13 @@ export default function AdminCreatePage() {
     // Build expiration string
     let expiration = "";
     if (!expirationNever) {
-      expiration = `${expirationValue}${expirationUnit === "hours" ? "h" : "d"}`;
+      if (expirationUnit === "minutes") {
+        expiration = `${expirationValue}m`;
+      } else if (expirationUnit === "hours") {
+        expiration = `${expirationValue}h`;
+      } else if (expirationUnit === "days") {
+        expiration = `${expirationValue}d`;
+      }
     }
     
     const payload = {
@@ -105,6 +128,11 @@ export default function AdminCreatePage() {
               type="password"
               value={auth}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuth(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === 'Enter') {
+                  handleLogin();
+                }
+              }}
               className="mb-4"
             />
             <Button onClick={handleLogin} className="w-full">
@@ -170,14 +198,22 @@ export default function AdminCreatePage() {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpirationValue(e.target.value)}
                     className="w-20"
                   />
-                  <select
+                  <div className="relative">
+                                      <select
                     value={expirationUnit}
                     onChange={(e) => setExpirationUnit(e.target.value)}
-                    className="border rounded px-3 py-2 text-sm"
+                    className="border rounded px-3 py-2 pr-8 text-sm appearance-none bg-white"
                   >
+                    <option value="minutes">Minutes</option>
                     <option value="hours">Hours</option>
                     <option value="days">Days</option>
                   </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -198,7 +234,7 @@ export default function AdminCreatePage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800">Questions</h2>
-            <Button onClick={handleAddQuestion} variant="outline" size="sm">
+            <Button onClick={handleAddQuestion} className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" size="sm">
               + Add Question
             </Button>
           </div>
@@ -206,7 +242,15 @@ export default function AdminCreatePage() {
           <div className="space-y-6">
             {questions.map((q, i) => (
               <div key={i}>
-                <Card className="p-6 border border-gray-200 shadow-sm">
+                <Card className={`p-6 border border-gray-200 shadow-sm ${
+                  q.type === "text" ? "bg-yellow-50" :
+                  q.type === "yesno" ? "bg-pink-50" :
+                  q.type === "mcq" ? "bg-blue-50" :
+                  q.type === "checkbox" ? "bg-green-50" :
+                  q.type === "scale" ? "bg-purple-50" :
+                  q.type === "likert" ? "bg-orange-50" :
+                  "bg-white"
+                }`}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-800">Question {i + 1}</h3>
                     {questions.length > 1 && (
@@ -234,26 +278,34 @@ export default function AdminCreatePage() {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleQuestionChange(i, "label", e.target.value)
                         }
-                        className="w-full"
+                        className="w-full bg-white"
                       />
                     </div>
                     
                     <div>
                       <Label className="block text-sm font-medium text-gray-700 mb-2">Question Type</Label>
-                      <select
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={q.type}
-                        onChange={(e) =>
-                          handleQuestionChange(i, "type", e.target.value)
-                        }
-                      >
-                        <option value="text">Text Response</option>
-                        <option value="yesno">Yes/No</option>
-                        <option value="mcq">Multiple Choice</option>
-                        <option value="checkbox">Checkboxes</option>
-                        <option value="scale">Scale (1–5)</option>
-                      </select>
-                    </div>
+                      <div className="relative">
+                        <select
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                          value={q.type}
+                          onChange={(e) =>
+                            handleQuestionChange(i, "type", e.target.value)
+                          }
+                        >
+                          <option value="text">Text Response</option>
+                          <option value="yesno">Yes/No</option>
+                                                      <option value="mcq">Multiple Choice</option>
+                            <option value="checkbox">Checkboxes</option>
+                            <option value="scale">Scale</option>
+                            <option value="likert">Likert</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                                              </div>
+                      </div>
                     
                     {(q.type === "mcq" || q.type === "checkbox") && (
                       <div>
@@ -269,7 +321,7 @@ export default function AdminCreatePage() {
                                   newOptions[optionIndex] = e.target.value;
                                   handleQuestionChange(i, "options", newOptions);
                                 }}
-                                className="flex-1"
+                                className="flex-1 bg-white"
                               />
                               <Button
                                 type="button"
@@ -287,16 +339,61 @@ export default function AdminCreatePage() {
                           ))}
                           <Button
                             type="button"
-                            variant="outline"
                             size="sm"
                             onClick={() => {
                               const newOptions = [...q.options, ""];
                               handleQuestionChange(i, "options", newOptions);
                             }}
-                            className="w-full"
+                            className="w-full bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200"
                           >
                             + Add Option
                           </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {q.type === "scale" && (
+                      <div>
+                        <Label className="block text-sm font-medium text-gray-700 mb-2">Scale Range</Label>
+                        <div className="relative">
+                          <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                            value={q.scaleRange || 5}
+                            onChange={(e) =>
+                              handleQuestionChange(i, "scaleRange", parseInt(e.target.value))
+                            }
+                          >
+                            <option value={5}>1-5</option>
+                            <option value={10}>1-10</option>
+                            <option value={100}>1-100</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {q.type === "likert" && (
+                      <div>
+                        <Label className="block text-sm font-medium text-gray-700 mb-3">Likert Scale Options</Label>
+                        <div className="space-y-3">
+                          {q.options.map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center gap-3">
+                              <Input
+                                value={option}
+                                placeholder={`Option ${optionIndex + 1}`}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                  const newOptions = [...q.options];
+                                  newOptions[optionIndex] = e.target.value;
+                                  handleQuestionChange(i, "options", newOptions);
+                                }}
+                                className="flex-1 bg-white"
+                              />
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -314,14 +411,22 @@ export default function AdminCreatePage() {
         {/* Action Buttons */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {questions.length} question{questions.length !== 1 ? 's' : ''} • {title ? 'Ready to create' : 'Add a title to continue'}
+            <div className="text-sm">
+              {questions.length} question{questions.length !== 1 ? 's' : ''} • {
+                !title.trim() ? (
+                  <span className="text-red-600">Add a title to continue</span>
+                ) : questions.some(q => !q.label.trim()) ? (
+                  <span className="text-red-600">Add question text to continue</span>
+                ) : (
+                  <span className="text-green-600">Ready to create</span>
+                )
+              }
             </div>
             <div className="flex gap-3">
               <Button 
                 onClick={handleSubmit} 
-                disabled={submitting || !title.trim()}
-                className="px-8 py-2"
+                disabled={submitting || !title.trim() || questions.some(q => !q.label.trim())}
+                className="px-8 py-2 bg-blue-700 hover:bg-blue-800 text-white"
               >
                 {submitting ? (
                   <div className="flex items-center gap-2">
@@ -352,8 +457,12 @@ export default function AdminCreatePage() {
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-block mt-3 text-green-600 hover:text-green-700 underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.open(result, '_blank', 'noopener,noreferrer');
+                  }}
                 >
-                  View Form →
+                  View Form
                 </a>
               </div>
             </div>

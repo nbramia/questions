@@ -131,6 +131,13 @@ function parseExpiration(input: string) {
     return null; // No expiration
   }
   
+  if (input.endsWith("m")) {
+    const minutes = parseInt(input.slice(0, -1), 10);
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + minutes);
+    return d.toISOString();
+  }
+  
   if (input.endsWith("h")) {
     const hours = parseInt(input.slice(0, -1), 10);
     const d = new Date();
