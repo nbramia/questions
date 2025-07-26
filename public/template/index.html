@@ -16,6 +16,7 @@
   <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="bg-white shadow p-6 max-w-xl w-full rounded">
       <h1 id="form-title" class="text-xl font-semibold mb-4">Loading...</h1>
+      <div id="form-description" class="text-gray-600 mb-6 hidden"></div>
       <form id="feedback-form" class="space-y-4"></form>
       <div id="submitted-msg" class="text-green-600 mt-4 hidden">
         Thank you for your feedback!
@@ -28,6 +29,7 @@
     <script>
       const form = document.getElementById("feedback-form");
       const formTitle = document.getElementById("form-title");
+      const formDescription = document.getElementById("form-description");
       const submittedMsg = document.getElementById("submitted-msg");
       const errorMsg = document.getElementById("error-msg");
       const configPath = "./config.json";
@@ -58,6 +60,14 @@
 
       function renderForm(cfg) {
         formTitle.textContent = cfg.title;
+        
+        // Show description if available
+        if (cfg.description && cfg.description.trim() !== "") {
+          formDescription.textContent = cfg.description;
+          formDescription.classList.remove("hidden");
+        } else {
+          formDescription.classList.add("hidden");
+        }
 
         const now = new Date();
         console.log("Form config:", cfg);
@@ -126,6 +136,13 @@
           }
 
           form.appendChild(wrapper);
+          
+          // Add horizontal bar between questions (except after the last one)
+          if (i < cfg.questions.length - 1) {
+            const divider = document.createElement("div");
+            divider.className = "h-px bg-gray-200 my-6";
+            form.appendChild(divider);
+          }
         });
 
         const submitBtn = document.createElement("button");
@@ -136,6 +153,15 @@
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
+          
+          // Immediately disable the submit button
+          const submitBtn = form.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+            submitBtn.className = "bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed";
+          }
+          
           const data = new FormData(form);
           const entries = Object.fromEntries(data.entries());
           const ip = await getIP();
@@ -175,6 +201,13 @@
                   errorMsg.textContent = response.error;
                 }
                 errorMsg.classList.remove("hidden");
+                
+                // Re-enable the submit button on error
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = "Submit";
+                  submitBtn.className = "bg-blue-600 text-white px-4 py-2 rounded";
+                }
               }
               // Clean up
               delete window[callbackName];
@@ -194,6 +227,15 @@
             setTimeout(() => {
               if (window[callbackName]) {
                 errorMsg.classList.remove("hidden");
+                errorMsg.textContent = "Request timed out. Please try again.";
+                
+                // Re-enable the submit button on timeout
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = "Submit";
+                  submitBtn.className = "bg-blue-600 text-white px-4 py-2 rounded";
+                }
+                
                 delete window[callbackName];
                 document.head.removeChild(script);
               }

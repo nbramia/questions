@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const id = nanoid(6);
-    const { title, expiration, enforceUnique, questions } = body;
+    const { title, description, expiration, enforceUnique, questions } = body;
 
     console.log("Creating form with ID:", id);
 
@@ -31,6 +31,7 @@ export async function POST(req: Request) {
     const config: any = {
       id,
       title,
+      description,
       enforceUnique,
       questions,
       googleScriptUrl: process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec",
