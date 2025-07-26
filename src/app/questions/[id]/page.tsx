@@ -1,7 +1,5 @@
 // src/app/questions/[id]/page.tsx
 import { notFound } from 'next/navigation';
-import { readFile } from 'fs/promises';
-import path from 'path';
 
 interface PageProps {
   params: Promise<{
@@ -14,23 +12,30 @@ export default async function QuestionPage({ params }: PageProps) {
     // Await the params Promise
     const { id } = await params;
     
-    // Try to read the config file for this form from local files
-    const configPath = path.join(process.cwd(), 'docs', 'question', id, 'config.json');
-    const configContent = await readFile(configPath, 'utf-8');
-    const config = JSON.parse(configContent);
+    // Fetch the config from the deployed GitHub Pages URL
+    const configUrl = `https://nbramia.github.io/questions/question/${id}/config.json`;
+    const configResponse = await fetch(configUrl);
+    
+    if (!configResponse.ok) {
+      console.error('Config not found:', configResponse.status);
+      notFound();
+    }
+    
+    const config = await configResponse.json();
 
-    // Read the template HTML
-    const templatePath = path.join(process.cwd(), 'public', 'template', 'index.html');
-    const templateHtml = await readFile(templatePath, 'utf-8');
-
-    // Inject the config into the template
-    const htmlWithConfig = templateHtml.replace(
-      'const configPath = "./config.json";',
-      `const config = ${JSON.stringify(config)};`
-    );
+    // Fetch the template HTML
+    const templateUrl = `https://nbramia.github.io/questions/question/${id}/index.html`;
+    const templateResponse = await fetch(templateUrl);
+    
+    if (!templateResponse.ok) {
+      console.error('Template not found:', templateResponse.status);
+      notFound();
+    }
+    
+    const templateHtml = await templateResponse.text();
 
     return (
-      <div dangerouslySetInnerHTML={{ __html: htmlWithConfig }} />
+      <div dangerouslySetInnerHTML={{ __html: templateHtml }} />
     );
   } catch (error) {
     console.error('Error loading form:', error);
