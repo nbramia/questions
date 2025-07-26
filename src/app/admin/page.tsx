@@ -556,7 +556,7 @@ export default function AdminCreatePage() {
     if (key === "type") {
       updated[index].type = value as string;
       if (value !== "mcq" && value !== "checkbox" && value !== "likert") {
-        updated[index].options = [];
+      updated[index].options = [];
       }
       if (value === "scale") {
         updated[index].scaleRange = 5; // Default to 1-5
@@ -725,7 +725,7 @@ export default function AdminCreatePage() {
           <div className="space-y-6">
             <div>
               <Label className="block text-sm font-medium text-gray-700 mb-2">Title</Label>
-              <Input 
+          <Input
                 value={title} 
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 className="w-full"
@@ -790,10 +790,10 @@ export default function AdminCreatePage() {
             
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <Switch
-                  checked={enforceUnique}
-                  onCheckedChange={setEnforceUnique}
-                />
+            <Switch
+              checked={enforceUnique}
+              onCheckedChange={setEnforceUnique}
+            />
                 <Label className="text-sm font-medium text-gray-700">Enforce Unique by IP/Device</Label>
               </div>
             </div>
@@ -819,7 +819,7 @@ export default function AdminCreatePage() {
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-6">
-                {questions.map((q, i) => (
+          {questions.map((q, i) => (
                   <SortableQuestion
                     key={q.id}
                     question={q}
@@ -865,7 +865,7 @@ export default function AdminCreatePage() {
                 ) : (
                   "Create Form"
                 )}
-              </Button>
+          </Button>
             </div>
           </div>
         </div>
@@ -942,42 +942,41 @@ export default function AdminCreatePage() {
               </div>
             </div>
             
-            {/* Countdown Timer */}
-            {countdown > 0 && (
-              <div className="mt-4 rounded-md bg-blue-100 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-blue-700">
+            {/* Countdown Timer and QR Code */}
+            <div className="mt-4 flex items-start gap-4">
+              {/* Countdown Timer */}
+              {countdown > 0 && (
+                <div className="flex-1 rounded-md bg-blue-100 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">Form will be ready in</span>
+                  </div>
+                  <span className="text-blue-900 font-bold tracking-wide">{countdown}s</span>
+                </div>
+              )}
+              
+              {countdown === 0 && (
+                <div className="flex-1 rounded-md bg-green-100 px-4 py-3 flex items-center gap-2 text-green-700">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="font-medium">Form will be ready in</span>
+                  <span className="font-medium">Form should now be ready to use!</span>
                 </div>
-                <span className="text-blue-900 font-bold tracking-wide">{countdown}s</span>
-              </div>
-            )}
-            
-            {countdown === 0 && (
-              <div className="mt-4 rounded-md bg-green-100 px-4 py-3 flex items-center gap-2 text-green-700">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="font-medium">Form should now be ready to use!</span>
-              </div>
-            )}
-            
-            {/* QR Code Display */}
-            {qrCodeData && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-700">QR Code</span>
-                  <span className="text-xs text-gray-500">Click to expand</span>
+              )}
+              
+              {/* QR Code Display */}
+              {qrCodeData && (
+                <div className="flex-shrink-0">
+                  <div 
+                    className="w-16 h-16 cursor-pointer hover:opacity-80 transition-opacity bg-white p-1 rounded border"
+                    onClick={() => setShowQRModal(true)}
+                    dangerouslySetInnerHTML={{ __html: qrCodeData }}
+                  />
                 </div>
-                <div 
-                  className="w-24 h-24 cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setShowQRModal(true)}
-                  dangerouslySetInnerHTML={{ __html: qrCodeData }}
-                />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
