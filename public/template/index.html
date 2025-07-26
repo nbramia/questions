@@ -130,11 +130,20 @@
           const entries = Object.fromEntries(data.entries());
           const ip = await getIP();
 
+          // Create a mapping of question keys to their labels
+          const questionLabels = {};
+          cfg.questions.forEach((q, i) => {
+            const questionKey = q.id || `q${i}`;
+            questionLabels[questionKey] = q.label;
+          });
+
           const submission = {
             question_id: cfg.id,
             form_title: cfg.title,
             timestamp: new Date().toISOString(),
             answers: entries,
+            question_labels: questionLabels,
+            enforceUnique: cfg.enforceUnique,
             ip,
             user_agent: navigator.userAgent,
           };
@@ -151,6 +160,10 @@
                 form.classList.add("hidden");
                 submittedMsg.classList.remove("hidden");
               } else {
+                // Show specific error message if available
+                if (response.error) {
+                  errorMsg.textContent = response.error;
+                }
                 errorMsg.classList.remove("hidden");
               }
               // Clean up

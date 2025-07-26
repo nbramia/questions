@@ -23,7 +23,7 @@ function handleRequest(e) {
     }
     
     // Get the spreadsheet - you'll need to replace this with your actual spreadsheet ID
-    const spreadsheetId = 'YOUR_SPREADSHEET_ID'; // Replace with your actual spreadsheet ID
+    const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; // Replace with your actual spreadsheet ID
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     
     // Get or create the sheet for this question
@@ -47,6 +47,32 @@ function handleRequest(e) {
       // Handle array answers (for checkboxes) by joining with commas
       const answerValue = Array.isArray(answer) ? answer.join(', ') : answer;
       rowData.push(answerValue || '');
+    }
+    
+    // Check for uniqueness if required
+    if (data.enforceUnique) {
+      const existingRows = sheet.getDataRange().getValues();
+      const ipColumn = 1; // IP address is in column B (index 1)
+      
+      // Check if this IP has already submitted
+      for (let i = 1; i < existingRows.length; i++) { // Skip header row
+        if (existingRows[i][ipColumn] === data.ip) {
+          // IP already submitted, return error
+          if (e.parameter.callback) {
+            // JSONP error response
+            const callback = e.parameter.callback;
+            const result = JSON.stringify({ error: "You have already submitted a response." });
+            return ContentService
+              .createTextOutput(callback + '(' + result + ')')
+              .setMimeType(ContentService.MimeType.JAVASCRIPT);
+          } else {
+            // Regular JSON error response
+            return ContentService
+              .createTextOutput(JSON.stringify({ error: "You have already submitted a response." }))
+              .setMimeType(ContentService.MimeType.JSON);
+          }
+        }
+      }
     }
     
     // Append the row to the sheet
@@ -97,13 +123,14 @@ function getOrCreateSheet(spreadsheet, questionId, data) {
     // Set up headers
     const headers = ['Timestamp', 'IP Address', 'User Agent'];
     
-    // Add question headers based on the answers
+    // Add question headers based on the question labels
     const answers = data.answers;
+    const questionLabels = data.question_labels || {};
     const questionKeys = Object.keys(answers).sort();
     
     for (const questionKey of questionKeys) {
-      // Create a readable header name
-      const headerName = `Question ${questionKey.replace('q', '')}`;
+      // Use the actual question label if available, otherwise fallback to generic name
+      const headerName = questionLabels[questionKey] || `Question ${questionKey.replace('q', '')}`;
       headers.push(headerName);
     }
     
