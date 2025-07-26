@@ -60,8 +60,10 @@
         formTitle.textContent = cfg.title;
 
         const now = new Date();
-        const exp = new Date(cfg.expires_at);
-        if (cfg.expires_at && now > exp) return disableForm();
+        if (cfg.expires_at) {
+          const exp = new Date(cfg.expires_at);
+          if (now > exp) return disableForm();
+        }
         if (cfg.enforceUnique && hasSubmitted(cfg.id)) return disableForm();
 
         cfg.questions.forEach((q, i) => {

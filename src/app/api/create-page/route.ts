@@ -118,11 +118,28 @@ export async function POST(req: Request) {
 }
 
 function parseExpiration(input: string) {
+  if (!input || input.trim() === "") {
+    return null; // No expiration
+  }
+  
   if (input.endsWith("h")) {
     const hours = parseInt(input.slice(0, -1), 10);
     const d = new Date();
     d.setHours(d.getHours() + hours);
     return d.toISOString();
   }
-  return new Date(input).toISOString();
+  
+  if (input.endsWith("d")) {
+    const days = parseInt(input.slice(0, -1), 10);
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString();
+  }
+  
+  // Try to parse as ISO date
+  try {
+    return new Date(input).toISOString();
+  } catch {
+    return null;
+  }
 }

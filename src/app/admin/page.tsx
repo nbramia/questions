@@ -19,7 +19,9 @@ export default function AdminCreatePage() {
   const [auth, setAuth] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [title, setTitle] = useState("");
-  const [expiration, setExpiration] = useState("");
+  const [expirationNever, setExpirationNever] = useState(false);
+  const [expirationValue, setExpirationValue] = useState("24");
+  const [expirationUnit, setExpirationUnit] = useState("hours");
   const [enforceUnique, setEnforceUnique] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([
     { type: "yesno", label: "", options: [] },
@@ -27,7 +29,7 @@ export default function AdminCreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState("");
 
-  const PASSWORD = "hunter2"; // change this
+  const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD; 
 
   function handleLogin() {
     if (auth === PASSWORD) setAuthenticated(true);
@@ -54,6 +56,13 @@ export default function AdminCreatePage() {
 
   async function handleSubmit() {
     setSubmitting(true);
+    
+    // Build expiration string
+    let expiration = "";
+    if (!expirationNever) {
+      expiration = `${expirationValue}${expirationUnit === "hours" ? "h" : "d"}`;
+    }
+    
     const payload = {
       title,
       expiration,
@@ -113,11 +122,32 @@ export default function AdminCreatePage() {
           <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
         </div>
         <div className="mb-4">
-          <Label>Expiration (ISO or hours e.g. 72h)</Label>
-                      <Input
-              value={expiration}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpiration(e.target.value)}
+          <Label className="flex items-center gap-2 mb-2">
+            <Switch
+              checked={expirationNever}
+              onCheckedChange={setExpirationNever}
             />
+            Never Expire
+          </Label>
+          {!expirationNever && (
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="1"
+                value={expirationValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpirationValue(e.target.value)}
+                className="w-20"
+              />
+              <select
+                value={expirationUnit}
+                onChange={(e) => setExpirationUnit(e.target.value)}
+                className="border rounded px-3 py-2"
+              >
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+          )}
         </div>
         <div className="mb-4">
           <Label className="flex items-center gap-2">
@@ -156,14 +186,46 @@ export default function AdminCreatePage() {
                 <option value="scale">Scale (1–5)</option>
               </select>
               {(q.type === "mcq" || q.type === "checkbox") && (
-                <Textarea
-                  className="mt-1"
-                  placeholder="Option 1\nOption 2\nOption 3"
-                  value={q.options.join("\n")}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    handleQuestionChange(i, "options", e.target.value.split("\n"))
-                  }
-                />
+                <div className="mt-2">
+                  <Label className="block mb-2">Options</Label>
+                  <div className="space-y-2">
+                    {q.options.map((option, optionIndex) => (
+                      <div key={optionIndex} className="flex gap-2">
+                        <Input
+                          value={option}
+                          placeholder={`Option ${optionIndex + 1}`}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const newOptions = [...q.options];
+                            newOptions[optionIndex] = e.target.value;
+                            handleQuestionChange(i, "options", newOptions);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newOptions = q.options.filter((_, idx) => idx !== optionIndex);
+                            handleQuestionChange(i, "options", newOptions);
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newOptions = [...q.options, ""];
+                        handleQuestionChange(i, "options", newOptions);
+                      }}
+                    >
+                      Add Option
+                    </Button>
+                  </div>
+                </div>
               )}
             </Card>
           ))}
