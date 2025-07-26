@@ -792,6 +792,7 @@ export default function AdminCreatePage() {
               <div>
                 <h3 className="text-lg font-semibold text-green-800">Form Created Successfully!</h3>
                 <p className="text-green-700 mt-1">Your form has been deployed and is ready to use.</p>
+                <p className="text-yellow-700 mt-2 text-sm">Note: It may take 1-2 minutes for the form to become available due to deployment timing.</p>
                 <div className="flex items-center gap-2 mt-3">
                   <a 
                     href={result} 

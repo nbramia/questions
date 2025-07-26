@@ -12,27 +12,51 @@ export default async function QuestionPage({ params }: PageProps) {
     // Await the params Promise
     const { id } = await params;
     
-    // Fetch the config from the deployed GitHub Pages URL
-    const configUrl = `https://nbramia.github.io/questions/question/${id}/config.json`;
-    const configResponse = await fetch(configUrl);
+    console.log('Loading form with ID:', id);
+    
+    // Fetch the config from our local API
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    
+    const configUrl = `${baseUrl}/api/forms/${id}`;
+    console.log('Fetching config from:', configUrl);
+    
+    const configResponse = await fetch(configUrl, { 
+      cache: 'no-store'
+    });
+    
+    console.log('Config response status:', configResponse.status);
     
     if (!configResponse.ok) {
-      console.error('Config not found:', configResponse.status);
+      console.error('Config not found:', configResponse.status, configResponse.statusText);
       notFound();
     }
     
     const config = await configResponse.json();
+    console.log('Config loaded successfully');
 
-    // Fetch the template HTML
+    // Fetch the template HTML from GitHub Pages
     const templateUrl = `https://nbramia.github.io/questions/question/${id}/index.html`;
-    const templateResponse = await fetch(templateUrl);
+    console.log('Fetching template from:', templateUrl);
+    
+    const templateResponse = await fetch(templateUrl, { 
+      cache: 'no-store',
+      headers: {
+        'Accept': 'text/html',
+        'User-Agent': 'Mozilla/5.0 (compatible; FormLoader/1.0)'
+      }
+    });
+    
+    console.log('Template response status:', templateResponse.status);
     
     if (!templateResponse.ok) {
-      console.error('Template not found:', templateResponse.status);
+      console.error('Template not found:', templateResponse.status, templateResponse.statusText);
       notFound();
     }
     
     const templateHtml = await templateResponse.text();
+    console.log('Template loaded successfully');
 
     return (
       <div dangerouslySetInnerHTML={{ __html: templateHtml }} />
