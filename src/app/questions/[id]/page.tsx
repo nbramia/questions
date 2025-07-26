@@ -4,15 +4,18 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function QuestionPage({ params }: PageProps) {
   try {
+    // Await the params Promise
+    const { id } = await params;
+    
     // Try to read the config file for this form
-    const configPath = path.join(process.cwd(), 'docs', 'questions', params.id, 'config.json');
+    const configPath = path.join(process.cwd(), 'docs', 'questions', id, 'config.json');
     const configContent = await readFile(configPath, 'utf-8');
     const config = JSON.parse(configContent);
 
