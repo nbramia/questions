@@ -454,6 +454,14 @@ export default function AdminCreatePage() {
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('adminAuthenticated') === 'true';
+    if (isAuthenticated) {
+      setAuthenticated(true);
+    }
+  }, []);
+
   // Function to download QR code as PNG
   const downloadQRCode = () => {
     if (!qrCodeData || !result) return;
@@ -512,6 +520,42 @@ export default function AdminCreatePage() {
     }
   }, [result]);
 
+  // Handle duplicate URL parameter
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const duplicateData = urlParams.get('duplicate');
+      
+      if (duplicateData) {
+        try {
+          const formData = JSON.parse(decodeURIComponent(duplicateData));
+          
+          // Pre-populate the form with the duplicated data
+          setTitle(formData.title || "");
+          setDescription(formData.description || "");
+          setEnforceUnique(formData.enforceUnique !== undefined ? formData.enforceUnique : true);
+          
+          // Pre-populate questions if they exist
+          if (formData.questions && Array.isArray(formData.questions)) {
+            // Generate new IDs for all questions to avoid conflicts
+            const questionsWithNewIds = formData.questions.map((q: Question, index: number) => ({
+              ...q,
+              id: `q${Date.now()}_${index}`,
+            }));
+            setQuestions(questionsWithNewIds);
+          }
+          
+          // Clear the URL parameter
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+          
+        } catch (error) {
+          console.error('Error parsing duplicate data:', error);
+        }
+      }
+    }
+  }, []);
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
@@ -539,7 +583,10 @@ export default function AdminCreatePage() {
   }
 
   function handleLogin() {
-    if (auth === PASSWORD) setAuthenticated(true);
+    if (auth === PASSWORD) {
+      setAuthenticated(true);
+      localStorage.setItem('adminAuthenticated', 'true');
+    }
   }
 
   function handleAddQuestion() {
@@ -709,13 +756,25 @@ export default function AdminCreatePage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Create New Feedback Page</h1>
-          <Button 
-            onClick={() => window.location.href = '/'}
-            variant="outline"
-            className="cursor-pointer"
-          >
-            Dashboard
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => {
+                localStorage.removeItem('adminAuthenticated');
+                setAuthenticated(false);
+              }}
+              variant="outline"
+              className="cursor-pointer"
+            >
+              Logout
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/'}
+              variant="outline"
+              className="cursor-pointer"
+            >
+              Dashboard
+            </Button>
+          </div>
         </div>
         
         {/* Form Configuration Section */}

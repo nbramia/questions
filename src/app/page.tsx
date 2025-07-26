@@ -24,6 +24,14 @@ export default function AdminDashboard() {
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('adminAuthenticated') === 'true';
+    if (isAuthenticated) {
+      setAuthenticated(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (authenticated) {
       fetchForms();
@@ -48,7 +56,10 @@ export default function AdminDashboard() {
   };
 
   const handleLogin = () => {
-    if (auth === PASSWORD) setAuthenticated(true);
+    if (auth === PASSWORD) {
+      setAuthenticated(true);
+      localStorage.setItem('adminAuthenticated', 'true');
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -124,12 +135,24 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-gray-600 mt-2">Manage your feedback forms</p>
           </div>
-          <Button 
-            onClick={() => window.location.href = '/admin'}
-            className="bg-blue-700 hover:bg-blue-800 text-white cursor-pointer"
-          >
-            Create New Form
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => {
+                localStorage.removeItem('adminAuthenticated');
+                setAuthenticated(false);
+              }}
+              variant="outline"
+              className="cursor-pointer"
+            >
+              Logout
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/admin'}
+              className="bg-blue-700 hover:bg-blue-800 text-white cursor-pointer"
+            >
+              Create New Form
+            </Button>
+          </div>
         </div>
 
         {/* Search and Stats */}
@@ -234,9 +257,37 @@ export default function AdminDashboard() {
                     </Button>
                     
                     <Button
-                      onClick={() => {
-                        // TODO: Implement duplicate functionality
-                        alert("Duplicate functionality coming soon!");
+                      onClick={async () => {
+                        try {
+                          // Fetch the form config to get the data
+                          const response = await fetch(`/api/forms/${form.id}`);
+                          if (response.ok) {
+                            const htmlContent = await response.text();
+                            
+                            // Extract the config from the HTML (it's injected as a script)
+                            const configMatch = htmlContent.match(/let config = ({.*?});/);
+                            if (configMatch) {
+                              const config = JSON.parse(configMatch[1]);
+                              
+                              // Navigate to admin page with the form data
+                              const formData = encodeURIComponent(JSON.stringify({
+                                title: `${config.title} (Copy)`,
+                                description: config.description || '',
+                                questions: config.questions,
+                                enforceUnique: config.enforceUnique,
+                                // Don't include expiration - let user set it fresh
+                              }));
+                              
+                              window.location.href = `/admin?duplicate=${formData}`;
+                            } else {
+                              alert('Could not extract form data');
+                            }
+                          } else {
+                            alert('Failed to load form data');
+                          }
+                        } catch (err) {
+                          alert('Error loading form data');
+                        }
                       }}
                       variant="outline"
                       size="sm"
