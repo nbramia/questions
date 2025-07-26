@@ -1,21 +1,13 @@
-// Improved Google Apps Script for handling form submissions
-// This version can handle dynamic headers based on the actual questions
+// Fixed Google Apps Script with proper CORS handling
+// This version should definitely work with CORS
 
 function doPost(e) {
-  // Set CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Max-Age': '86400'
-  };
-  
   try {
     // Parse the incoming JSON data
     const data = JSON.parse(e.postData.contents);
     
     // Get the spreadsheet - you'll need to replace this with your actual spreadsheet ID
-    const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; 
+    const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; // Replace with your actual spreadsheet ID
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     
     // Get or create the sheet for this question
@@ -44,18 +36,26 @@ function doPost(e) {
     // Append the row to the sheet
     sheet.appendRow(rowData);
     
-    // Return success response
+    // Return success response with CORS headers
     return ContentService
       .createTextOutput(JSON.stringify({ success: true }))
       .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
+      .setHeaders({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
       
   } catch (error) {
     console.error('Error processing submission:', error);
     return ContentService
       .createTextOutput(JSON.stringify({ error: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(headers);
+      .setHeaders({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
   }
 }
 
@@ -98,61 +98,27 @@ function getOrCreateSheet(spreadsheet, questionId, data) {
   return sheet;
 }
 
-// Function to set up CORS headers (needed for web requests)
+// Handle GET requests (for testing)
 function doGet(e) {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Max-Age': '86400'
-  };
-  
   return ContentService
     .createTextOutput('Form submission endpoint')
     .setMimeType(ContentService.MimeType.TEXT)
-    .setHeaders(headers);
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
 }
 
-// Handle OPTIONS requests for CORS preflight
+// Handle OPTIONS requests (CORS preflight)
 function doOptions(e) {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Max-Age': '86400'
-  };
-  
   return ContentService
     .createTextOutput('')
     .setMimeType(ContentService.MimeType.TEXT)
-    .setHeaders(headers);
-}
-
-// Optional: Function to manually set up a sheet with specific headers
-function setupSheetWithHeaders(spreadsheetId, sheetName, questionHeaders) {
-  const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-  let sheet = spreadsheet.getSheetByName(sheetName);
-  
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(sheetName);
-  }
-  
-  const headers = ['Timestamp', 'IP Address', 'User Agent', ...questionHeaders];
-  
-  // Clear existing content
-  sheet.clear();
-  
-  // Set headers
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  
-  // Format header row
-  sheet.getRange(1, 1, 1, headers.length)
-    .setFontWeight('bold')
-    .setBackground('#f0f0f0');
-  
-  // Auto-resize columns
-  sheet.autoResizeColumns(1, headers.length);
-  
-  // Freeze the header row
-  sheet.setFrozenRows(1);
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    });
 } 
