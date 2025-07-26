@@ -22,6 +22,11 @@ function handleRequest(e) {
       data = JSON.parse(e.postData.contents);
     }
     
+    // Check if this is a GET request for response data
+    if (e.parameter.action === 'getResponses') {
+      return getResponsesForForm(e.parameter.formId);
+    }
+    
     // Get the spreadsheet - you'll need to replace this with your actual spreadsheet ID
     const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; // Replace with your actual spreadsheet ID
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
@@ -150,4 +155,75 @@ function getOrCreateSheet(spreadsheet, questionId, data) {
   }
   
   return sheet;
+}
+
+function getResponsesForForm(formId) {
+  try {
+    // Get the spreadsheet - use the same ID as in your main function
+    const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; // Replace with your actual spreadsheet ID
+    const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    
+    // Try to get the sheet for this form
+    const sheet = spreadsheet.getSheetByName(formId);
+    
+    if (!sheet) {
+      // No responses for this form yet
+      return ContentService
+        .createTextOutput(JSON.stringify({ 
+          totalResponses: 0, 
+          lastResponseAt: null, 
+          responses: [] 
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Get all data from the sheet
+    const data = sheet.getDataRange().getValues();
+    
+    if (data.length <= 1) {
+      // Only header row or empty sheet
+      return ContentService
+        .createTextOutput(JSON.stringify({ 
+          totalResponses: 0, 
+          lastResponseAt: null, 
+          responses: [] 
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Calculate response statistics
+    const totalResponses = data.length - 1; // Subtract header row
+    let lastResponseAt = null;
+    
+    if (totalResponses > 0) {
+      // Get the most recent response timestamp (column A)
+      const timestamps = data.slice(1).map(row => new Date(row[0]));
+      const latestTimestamp = new Date(Math.max(...timestamps.map(d => d.getTime())));
+      lastResponseAt = latestTimestamp.toISOString();
+    }
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        totalResponses: totalResponses,
+        lastResponseAt: lastResponseAt,
+        responses: data.slice(1).map(row => ({
+          timestamp: row[0],
+          ip: row[1],
+          userAgent: row[2],
+          // Include other columns as needed
+        }))
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    console.error('Error getting responses for form:', error);
+    return ContentService
+      .createTextOutput(JSON.stringify({ 
+        error: error.toString(),
+        totalResponses: 0, 
+        lastResponseAt: null, 
+        responses: [] 
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 } 

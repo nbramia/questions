@@ -16,6 +16,8 @@ interface FormInfo {
   status: 'active' | 'disabled';
   isExpired: boolean;
   url: string;
+  totalResponses?: number;
+  lastResponseAt?: string;
 }
 
 export default function AdminDashboard() {
@@ -46,7 +48,25 @@ export default function AdminDashboard() {
       const response = await fetch("/api/forms");
       if (response.ok) {
         const data = await response.json();
-        setForms(data.forms || []);
+        const formsWithResponses = await Promise.all(
+          (data.forms || []).map(async (form: FormInfo) => {
+            try {
+              const responseData = await fetch(`/api/forms/${form.id}/responses`);
+              if (responseData.ok) {
+                const responseInfo = await responseData.json();
+                return {
+                  ...form,
+                  totalResponses: responseInfo.totalResponses,
+                  lastResponseAt: responseInfo.lastResponseAt
+                };
+              }
+            } catch (error) {
+              console.error(`Error fetching responses for form ${form.id}:`, error);
+            }
+            return form;
+          })
+        );
+        setForms(formsWithResponses);
       } else {
         setError("Failed to fetch forms");
       }
@@ -221,6 +241,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const getResponseInfo = (totalResponses?: number, lastResponseAt?: string) => {
+    if (totalResponses === undefined || totalResponses === 0) {
+      return "No responses yet";
+    }
+    
+    const responseText = totalResponses === 1 ? "response" : "responses";
+    let info = `${totalResponses} ${responseText}`;
+    
+    if (lastResponseAt) {
+      const lastResponse = new Date(lastResponseAt);
+      const now = new Date();
+      const diffMs = now.getTime() - lastResponse.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      if (diffDays > 0) {
+        info += ` • Last response ${diffDays}d ago`;
+      } else if (diffHours > 0) {
+        info += ` • Last response ${diffHours}h ago`;
+      } else {
+        info += ` • Last response <1h ago`;
+      }
+    }
+    
+    return info;
+  };
+
   const filteredForms = forms.filter(form =>
     form.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -255,7 +302,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
@@ -357,6 +404,9 @@ export default function AdminDashboard() {
                       )}
                       <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                         ID: {form.id} • {form.updated_at && form.updated_at !== form.created_at ? 'Updated' : 'Created'}: {formatDate(form.updated_at && form.updated_at !== form.created_at ? form.updated_at : form.created_at)}{getExpirationInfo(form.expires_at, form.status) && ` • ${getExpirationInfo(form.expires_at, form.status)}`}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        {getResponseInfo(form.totalResponses, form.lastResponseAt)}
                       </div>
                       
                       {/* Primary actions - horizontal row */}
