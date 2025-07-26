@@ -83,6 +83,10 @@
       }
 
       function disableForm() {
+        // Hide title and description
+        formTitle.classList.add("hidden");
+        formDescription.classList.add("hidden");
+        
         form.innerHTML = `
           <div class="p-6 bg-gray-50 border border-gray-200 rounded-lg">
             <div class="flex items-center gap-3">
@@ -142,6 +146,7 @@
         cfg.questions.forEach((q, i) => {
           const questionCard = document.createElement("div");
           questionCard.className = `p-6 border border-gray-200 shadow-sm rounded-lg ${getQuestionBackgroundColor(q.type)}`;
+          questionCard.setAttribute("data-question-id", q.id || `q${i}`);
           
           const questionContent = document.createElement("div");
           questionContent.className = "space-y-4";
@@ -268,7 +273,7 @@
             const valueDisplay = document.createElement("div");
             valueDisplay.className = "text-center";
             valueDisplay.innerHTML = `
-              <span class="text-2xl font-bold text-blue-600">1</span>
+              <span class="text-2xl font-bold text-purple-700">1</span>
               <span class="text-gray-500 ml-2">of ${scaleRange}</span>
             `;
             sliderContainer.appendChild(valueDisplay);
@@ -302,7 +307,7 @@
                 width: 24px;
                 height: 24px;
                 border-radius: 50%;
-                background: #3b82f6;
+                background: #7c3aed;
                 cursor: pointer;
                 border: 2px solid #ffffff;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -311,14 +316,14 @@
                 width: 24px;
                 height: 24px;
                 border-radius: 50%;
-                background: #3b82f6;
+                background: #7c3aed;
                 cursor: pointer;
                 border: 2px solid #ffffff;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
               }
               .slider:focus {
                 outline: none;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
               }
             `;
             document.head.appendChild(style);
@@ -328,7 +333,7 @@
               const value = this.value;
               hiddenInput.value = value;
               valueDisplay.innerHTML = `
-                <span class="text-2xl font-bold text-blue-600">${value}</span>
+                <span class="text-2xl font-bold text-purple-700">${value}</span>
                 <span class="text-gray-500 ml-2">of ${scaleRange}</span>
               `;
             });
@@ -338,7 +343,7 @@
             
             // Scale labels
             const labelsContainer = document.createElement("div");
-            labelsContainer.className = "flex justify-between text-xs text-gray-500 px-1";
+            labelsContainer.className = "flex justify-between text-gray-500 px-1";
             
             const startLabel = document.createElement("span");
             startLabel.textContent = "1";
@@ -362,6 +367,18 @@
             divider.className = "h-px bg-gray-200 my-8";
             form.appendChild(divider);
           }
+        });
+
+        // Initial visibility update
+        updateQuestionVisibility(cfg);
+
+        // Add event listeners to update visibility when values change
+        form.addEventListener('change', () => {
+          updateQuestionVisibility(cfg);
+        });
+
+        form.addEventListener('input', () => {
+          updateQuestionVisibility(cfg);
         });
 
         // Submit button container
@@ -428,6 +445,9 @@
             window[callbackName] = function(response) {
               if (response.success) {
                 markSubmitted(cfg.id);
+                // Hide title and description
+                formTitle.classList.add("hidden");
+                formDescription.classList.add("hidden");
                 form.classList.add("hidden");
                 submittedMsg.classList.remove("hidden");
               } else {
@@ -487,6 +507,74 @@
             }
           } catch (err) {
             errorMsg.classList.remove("hidden");
+          }
+        });
+      }
+
+      function shouldShowQuestion(q, i, cfg) {
+        if (!q.skipLogic || !q.skipLogic.enabled) {
+          return true;
+        }
+
+        // Find the dependent question by ID
+        const dependentQuestion = cfg.questions.find(dq => dq.id === q.skipLogic.dependsOn);
+        if (!dependentQuestion) {
+          return true; // Show if dependency not found
+        }
+
+        // Get the current value of the dependent question
+        const dependentInput = form.querySelector(`[name="${q.skipLogic.dependsOn}"], [name="q${cfg.questions.indexOf(dependentQuestion)}"]`);
+        if (!dependentInput) {
+          return false; // Hide if dependent input not found
+        }
+
+        let currentValue = "";
+        if (dependentInput.type === "radio" || dependentInput.type === "checkbox") {
+          const checkedInput = form.querySelector(`[name="${dependentInput.name}"]:checked`);
+          currentValue = checkedInput ? checkedInput.value : "";
+        } else {
+          currentValue = dependentInput.value;
+        }
+
+        // Apply condition
+        switch (q.skipLogic.condition) {
+          case "equals":
+            return currentValue === q.skipLogic.value;
+          case "not_equals":
+            return currentValue !== q.skipLogic.value;
+          case "includes":
+            // For checkbox questions, check if the comma-separated values include the required value
+            if (dependentQuestion.type === "checkbox") {
+              const selectedValues = currentValue.split(", ").filter(v => v.trim() !== "");
+              return selectedValues.includes(q.skipLogic.value);
+            }
+            return currentValue === q.skipLogic.value;
+          case "not_includes":
+            // For checkbox questions, check if the comma-separated values don't include the required value
+            if (dependentQuestion.type === "checkbox") {
+              const selectedValues = currentValue.split(", ").filter(v => v.trim() !== "");
+              return !selectedValues.includes(q.skipLogic.value);
+            }
+            return currentValue !== q.skipLogic.value;
+          case "greater_than":
+            return parseFloat(currentValue) > parseFloat(q.skipLogic.value);
+          case "less_than":
+            return parseFloat(currentValue) < parseFloat(q.skipLogic.value);
+          case "contains":
+            return currentValue.toLowerCase().includes(q.skipLogic.value.toLowerCase());
+          case "not_contains":
+            return !currentValue.toLowerCase().includes(q.skipLogic.value.toLowerCase());
+          default:
+            return true;
+        }
+      }
+
+      function updateQuestionVisibility(cfg) {
+        cfg.questions.forEach((q, i) => {
+          const questionElement = document.querySelector(`[data-question-id="${q.id || `q${i}`}"]`);
+          if (questionElement) {
+            const shouldShow = shouldShowQuestion(q, i, cfg);
+            questionElement.style.display = shouldShow ? "block" : "none";
           }
         });
       }
