@@ -185,7 +185,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 handleQuestionChange(i, "label", e.target.value)
               }
-              className="w-full bg-white"
+              className="w-full !bg-white !border-gray-300 !text-gray-900"
             />
           </div>
           
@@ -193,7 +193,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
             <Label className="block text-sm font-medium text-gray-700 mb-2">Question Type</Label>
             <div className="relative">
               <select
-                className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none !bg-white !text-gray-900"
                 value={q.type}
                 onChange={(e) =>
                   handleQuestionChange(i, "type", e.target.value)
@@ -228,7 +228,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                         newOptions[optionIndex] = e.target.value;
                         handleQuestionChange(i, "options", newOptions);
                       }}
-                      className="flex-1 bg-white"
+                      className="flex-1 !bg-white !border-gray-300 !text-gray-900"
                     />
                     <Button
                       type="button"
@@ -270,7 +270,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
               <Label className="block text-sm font-medium text-gray-700 mb-2">Scale Range</Label>
               <div className="relative">
                 <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none !bg-white !text-gray-900"
                   value={q.scaleRange || 5}
                   onChange={(e) =>
                     handleQuestionChange(i, "scaleRange", parseInt(e.target.value))
@@ -303,7 +303,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                         newOptions[optionIndex] = e.target.value;
                         handleQuestionChange(i, "options", newOptions);
                       }}
-                      className="flex-1 bg-white"
+                      className="flex-1 !bg-white !border-gray-300 !text-gray-900"
                     />
                   </div>
                 ))}
@@ -324,6 +324,8 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                       : { enabled: false, dependsOn: "", condition: "equals", value: "" };
                     handleQuestionChange(i, "skipLogic", skipLogic);
                   }}
+                  className="!bg-gray-300 !data-[state=checked]:!bg-blue-700 !data-[state=unchecked]:!bg-gray-400"
+                  thumbClassName="!bg-white"
                 />
                 <Label className="block text-sm font-medium text-gray-700 cursor-pointer" onClick={() => {
                   const enabled = !(q.skipLogic?.enabled || false);
@@ -342,7 +344,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                     <Label className="block text-sm font-medium text-gray-700 mb-2">Question</Label>
                     <div className="relative">
                       <select
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none !bg-white !text-gray-900"
                         value={q.skipLogic?.dependsOn || ""}
                         onChange={(e) => {
                           const skipLogic = { ...q.skipLogic!, dependsOn: e.target.value };
@@ -367,7 +369,7 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                     <Label className="block text-sm font-medium text-gray-700 mb-2">Condition</Label>
                     <div className="relative">
                       <select
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none !bg-white !text-gray-900"
                         value={q.skipLogic?.condition || "equals"}
                         onChange={(e) => {
                           const skipLogic = { ...q.skipLogic!, condition: e.target.value };
@@ -398,12 +400,12 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
                           const skipLogic = { ...q.skipLogic!, value: e.target.value };
                           handleQuestionChange(i, "skipLogic", skipLogic);
                         }}
-                        className="text-sm bg-white"
+                        className="text-sm !bg-white !border-gray-300 !text-gray-900"
                       />
                     ) : (
                       <div className="relative">
                         <select
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none !bg-white !text-gray-900"
                           value={q.skipLogic?.value || ""}
                           onChange={(e) => {
                             const skipLogic = { ...q.skipLogic!, value: e.target.value };
@@ -941,6 +943,8 @@ export default function AdminCreatePage() {
                 <Switch
                   checked={expirationNever}
                   onCheckedChange={setExpirationNever}
+                  className="dark:data-[state=checked]:bg-gray-900 dark:data-[state=unchecked]:bg-gray-400"
+                  thumbClassName="!bg-white"
                 />
                 <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Never Expire</Label>
               </div>
@@ -958,14 +962,14 @@ export default function AdminCreatePage() {
                                       <select
                     value={expirationUnit}
                     onChange={(e) => setExpirationUnit(e.target.value)}
-                    className="border rounded px-3 py-2 pr-8 text-sm appearance-none bg-white"
+                    className="border rounded px-3 py-2 pr-8 text-sm appearance-none bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
                     <option value="minutes">Minutes</option>
                     <option value="hours">Hours</option>
                     <option value="days">Days</option>
                   </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4 text-gray-400 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
@@ -974,22 +978,24 @@ export default function AdminCreatePage() {
               )}
             </div>
             
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="flex items-center gap-3">
             <Switch
               checked={enforceUnique}
               onCheckedChange={setEnforceUnique}
+              className="dark:data-[state=checked]:bg-gray-900 dark:data-[state=unchecked]:bg-gray-400"
+              thumbClassName="!bg-white"
             />
-                <Label className="text-sm font-medium text-gray-700">Enforce Unique by IP/Device</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enforce Unique by IP/Device</Label>
               </div>
             </div>
           </div>
         </div>
 
         {/* Questions Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Questions</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Questions</h2>
             <Button onClick={handleAddQuestion} className="bg-blue-200 text-blue-700 border-blue-200 hover:bg-blue-300 cursor-pointer" size="sm">
               + Add Question
             </Button>
@@ -1024,16 +1030,16 @@ export default function AdminCreatePage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8">
           <div className="flex items-center justify-between">
             <div className="text-sm">
               {questions.length} question{questions.length !== 1 ? 's' : ''} • {
                 !title.trim() ? (
-                  <span className="text-red-600">Add a title to continue</span>
+                  <span className="text-red-600 dark:text-red-400">Add a title to continue</span>
                 ) : questions.some(q => !q.label.trim()) ? (
-                  <span className="text-red-600">Add question text to continue</span>
+                  <span className="text-red-600 dark:text-red-400">Add question text to continue</span>
                 ) : (
-                  <span className="text-green-600">Ready to create</span>
+                  <span className="text-green-600 dark:text-green-400">Ready to create</span>
                 )
               }
             </div>
@@ -1061,7 +1067,7 @@ export default function AdminCreatePage() {
         </div>
 
         {result && (
-          <div className="mt-6 p-6 bg-green-50 border border-green-200 rounded-lg">
+          <div className="mt-6 p-6 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -1070,8 +1076,8 @@ export default function AdminCreatePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-green-800">Form Created Successfully!</h3>
-                  <p className="text-green-700 mt-1">Your form has been deployed; it may take a moment for it to become available.</p>
+                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">Form Created Successfully!</h3>
+                  <p className="text-green-700 dark:text-green-300 mt-1">Your form has been deployed; it may take a moment for it to become available.</p>
                 </div>
               </div>
               
@@ -1125,19 +1131,19 @@ export default function AdminCreatePage() {
             <div className="mt-4 flex items-start gap-4">
               {/* Countdown Timer */}
               {countdown > 0 && (
-                <div className="flex-1 rounded-md bg-blue-100 px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-blue-700">
+                <div className="flex-1 rounded-md bg-blue-100 dark:bg-blue-900 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="font-medium">Form will be ready in</span>
                   </div>
-                  <span className="text-blue-900 font-bold tracking-wide">{countdown}s</span>
+                  <span className="text-blue-900 dark:text-blue-100 font-bold tracking-wide">{countdown}s</span>
                 </div>
               )}
               
               {countdown === 0 && (
-                <div className="flex-1 rounded-md bg-green-100 px-4 py-3 flex items-center gap-2 text-green-700">
+                <div className="flex-1 rounded-md bg-green-100 dark:bg-green-900 px-4 py-3 flex items-center gap-2 text-green-700 dark:text-green-300">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -1149,17 +1155,17 @@ export default function AdminCreatePage() {
               {qrCodeData && (
                 <div className="flex-shrink-0 flex items-center gap-2">
                   <div 
-                    className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity bg-white p-1 rounded border flex items-center justify-center"
+                    className="w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity bg-white dark:bg-gray-800 p-1 rounded border dark:border-gray-600 flex items-center justify-center"
                     onClick={() => setShowQRModal(true)}
                     title="Click to view QR code"
                   >
-                    <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zM5 20h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
                     </svg>
                   </div>
                   <button
                     onClick={downloadQRCode}
-                    className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded-md transition-colors cursor-pointer"
+                    className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900 rounded-md transition-colors cursor-pointer"
                     title="Download QR code"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1179,14 +1185,14 @@ export default function AdminCreatePage() {
             onClick={() => setShowQRModal(false)}
           >
             <div 
-              className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full mx-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-xl font-semibold text-gray-900">QR Code</h3>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">QR Code</h3>
                 <button
                   onClick={() => setShowQRModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

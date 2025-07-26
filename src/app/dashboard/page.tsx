@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 
 interface FormInfo {
   id: string;
@@ -157,14 +158,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50">
+    <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50 dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage your feedback forms</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">Manage your feedback forms</p>
           </div>
           <div className="flex gap-3">
+            <DarkModeToggle />
             <Button 
               onClick={() => {
                 localStorage.removeItem('adminAuthenticated');
@@ -185,19 +187,19 @@ export default function AdminDashboard() {
         </div>
 
         {/* Search and Stats */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8 mb-8">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
             <div>
-              <Label className="block text-sm font-medium text-gray-700 mb-2">Search Forms</Label>
+              <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search Forms</Label>
               <Input
                 type="text"
                 placeholder="Search by title or ID..."
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full sm:w-80"
+                className="w-full sm:w-80 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               {filteredForms.length} of {forms.length} forms
             </div>
           </div>
@@ -205,15 +207,15 @@ export default function AdminDashboard() {
 
         {/* Forms List */}
         {loading ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <div className="flex items-center justify-center">
               <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="ml-3 text-gray-600">Loading forms...</span>
+              <span className="ml-3 text-gray-600 dark:text-gray-300">Loading forms...</span>
             </div>
           </div>
         ) : error ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div className="text-center text-red-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div className="text-center text-red-600 dark:text-red-400">
               <p className="font-medium">{error}</p>
               <Button 
                 onClick={fetchForms}
@@ -224,8 +226,8 @@ export default function AdminDashboard() {
             </div>
           </div>
         ) : filteredForms.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div className="text-center text-gray-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div className="text-center text-gray-600 dark:text-gray-300">
               <p className="font-medium">No forms found</p>
               <p className="text-sm mt-1">
                 {searchTerm ? "Try adjusting your search terms" : "Create your first form to get started"}
@@ -235,17 +237,17 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid gap-6">
             {filteredForms.map((form) => (
-              <Card key={form.id} className="shadow-sm border border-gray-200">
+              <Card key={form.id} className="shadow-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         {form.title}
                       </CardTitle>
                       {form.description && (
-                        <p className="text-gray-600 text-sm mb-3">{form.description}</p>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">{form.description}</p>
                       )}
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <span>ID: {form.id}</span>
                         <span>Created: {formatDate(form.created_at)}</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${

@@ -215,7 +215,7 @@
           const questionCard = document.createElement("div");
           const bgColor = getQuestionBackgroundColor(q.type);
           console.log(`Question ${i + 1} (${q.type}): background color = ${bgColor}`);
-          questionCard.className = `p-4 sm:p-6 border border-gray-200 dark:border-gray-600 shadow-sm rounded-lg ${bgColor} dark:bg-gray-700 overflow-auto`;
+          questionCard.className = `p-4 sm:p-6 border border-gray-200 shadow-sm rounded-lg ${bgColor} overflow-auto`;
           questionCard.setAttribute("data-question-id", q.id || `q${i}`);
           
           const questionContent = document.createElement("div");
@@ -223,14 +223,14 @@
 
           const label = document.createElement("label");
           label.textContent = q.label;
-          label.className = "block text-lg font-medium text-gray-800 dark:text-white mb-4";
+          label.className = "block text-lg font-medium text-gray-800 mb-4";
 
           questionContent.appendChild(label);
 
           if (q.type === "text") {
             const input = document.createElement("textarea");
             input.name = q.id || `q${i}`;
-            input.className = "w-full p-4 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 dark:text-white min-h-[120px] resize-vertical text-base";
+            input.className = "w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 min-h-[120px] resize-vertical text-base";
             input.placeholder = "Enter your response...";
             questionContent.appendChild(input);
           } else if (q.type === "yesno") {
@@ -239,7 +239,7 @@
             
             ["Yes", "No"].forEach((val) => {
               const opt = document.createElement("div");
-              opt.className = "flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer min-h-[44px]";
+              opt.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               opt.innerHTML = `
                 <input type="radio" name="${q.id || `q${i}`}" value="${val}" class="form-radio">
                 <span class="text-gray-700 dark:text-gray-300 font-medium">${val}</span>
@@ -266,7 +266,7 @@
             
             q.options.forEach((opt) => {
               const el = document.createElement("div");
-              el.className = "flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer min-h-[44px]";
+              el.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               el.innerHTML = `
                 <input type="radio" name="${q.id || `q${i}`}" value="${opt}" class="form-radio">
                 <span class="text-gray-700 dark:text-gray-300 font-medium">${opt}</span>
@@ -293,7 +293,7 @@
             
             q.options.forEach((opt) => {
               const el = document.createElement("div");
-              el.className = "flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer min-h-[44px]";
+              el.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               el.innerHTML = `
                 <input type="radio" name="${q.id || `q${i}`}" value="${opt}" class="form-radio">
                 <span class="text-gray-700 dark:text-gray-300 font-medium">${opt}</span>
@@ -320,10 +320,10 @@
             
             q.options.forEach((opt) => {
               const el = document.createElement("div");
-              el.className = "flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer min-h-[44px]";
+              el.className = "flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors cursor-pointer min-h-[44px]";
               el.innerHTML = `
                 <input type="checkbox" name="${q.id || `q${i}`}" value="${opt}" class="form-checkbox">
-                <span class="text-gray-700 dark:text-gray-300 font-medium">${opt}</span>
+                <span class="text-gray-700 font-medium">${opt}</span>
               `;
               
               // Make the entire container clickable
@@ -470,7 +470,7 @@
 
         // Submit button container
         const submitContainer = document.createElement("div");
-        submitContainer.className = "mt-8 pt-6 border-t border-gray-200 dark:border-gray-600";
+        submitContainer.className = "mt-8 pt-6 border-t border-gray-200";
         
         const submitBtn = document.createElement("button");
         submitBtn.textContent = "Submit";
