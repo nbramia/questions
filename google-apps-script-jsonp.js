@@ -11,6 +11,11 @@ function doGet(e) {
 
 function handleRequest(e) {
   try {
+    // Check if this is a GET request for response data
+    if (e.parameter.action === 'getResponses') {
+      return getResponsesForForm(e.parameter.formId);
+    }
+    
     let data;
     
     // Check if this is a JSONP request
@@ -22,11 +27,6 @@ function handleRequest(e) {
       data = JSON.parse(e.postData.contents);
     }
     
-    // Check if this is a GET request for response data
-    if (e.parameter.action === 'getResponses') {
-      return getResponsesForForm(e.parameter.formId);
-    }
-    
     // Get the spreadsheet - you'll need to replace this with your actual spreadsheet ID
     const spreadsheetId = '1CgqdeyNL3khePnFQkIbcS5zjjRxmHapOGncjA4Xk8oQ'; // Replace with your actual spreadsheet ID
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
@@ -34,7 +34,7 @@ function handleRequest(e) {
     // Get or create the sheet for this question
     const questionId = data.question_id;
     const formTitle = data.form_title || questionId; // Use form title if available, fallback to ID
-    let sheet = getOrCreateSheet(spreadsheet, formTitle, data);
+    let sheet = getOrCreateSheet(spreadsheet, questionId, data); // Use questionId as sheet name
     
     // Prepare the row data
     const rowData = [
