@@ -113,7 +113,7 @@ const GITHUB_REPO = "your-username/your-repo-name";
 
 ### Creating Forms
 
-1. Navigate to `https://your-domain.com/admin` and enter your admin password
+1. Navigate to `https://your-domain.com/create` and enter your admin password
 2. Fill in the form details:
    - **Title**: The form title that will be displayed
    - **Description**: Optional description or instructions
@@ -167,7 +167,8 @@ When users submit forms:
 ```
 src/
 ├── app/
-│   ├── admin/           # Form creation interface
+│   ├── dashboard/        # Admin dashboard interface
+│   ├── create/          # Form creation interface
 │   ├── api/
 │   │   ├── create-page/ # GitHub deployment API
 │   │   ├── forms/       # Form data serving API
@@ -255,7 +256,7 @@ Update these constants in `src/app/api/create-page/route.ts`:
 
 ### Vercel (Production)
 - **Domain**: `ramia.us` (custom domain)
-- **Admin Panel**: `https://ramia.us/admin`
+- **Admin Panel**: `https://ramia.us/dashboard`
 - **Form URLs**: `https://ramia.us/questions/[form-id]/`
 - **API Routes**: Serverless functions for form creation and serving
 
@@ -278,7 +279,7 @@ The form template uses Tailwind CSS. Modify `public/template/index.html` to chan
 ### Question Types
 
 Add new question types by:
-1. Updating the admin interface in `src/app/admin/page.tsx`
+1. Updating the admin interface in `src/app/create/page.tsx`
 2. Adding rendering logic in the template JavaScript
 3. Updating the Google Apps Script to handle new data formats
 

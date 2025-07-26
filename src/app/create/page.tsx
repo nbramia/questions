@@ -1,4 +1,4 @@
-// src/app/admin/page.tsx
+// src/app/create/page.tsx
 'use client';
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -869,7 +869,7 @@ export default function AdminCreatePage() {
               Logout
             </Button>
             <Button 
-              onClick={() => window.location.href = '/'}
+              onClick={() => window.location.href = '/dashboard'}
               variant="outline"
               className="cursor-pointer"
             >
