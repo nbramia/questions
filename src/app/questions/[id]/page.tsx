@@ -20,7 +20,7 @@ export default function QuestionPage({ params }: PageProps) {
         const { id } = await params;
         console.log('Loading form with ID:', id);
         
-        // Fetch both config and template from our local API
+        // Fetch the complete HTML from our API
         const apiUrl = `/api/forms/${id}`;
         console.log('Fetching from API:', apiUrl);
         
@@ -36,10 +36,10 @@ export default function QuestionPage({ params }: PageProps) {
           return;
         }
         
-        const data = await response.json();
-        console.log('Data loaded successfully');
+        const html = await response.text();
+        console.log('HTML loaded successfully');
         
-        setHtmlContent(data.template);
+        setHtmlContent(html);
         setLoading(false);
       } catch (error) {
         console.error('Error loading form:', error);

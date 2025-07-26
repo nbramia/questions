@@ -1,6 +1,20 @@
 # Feedback Form Creator
 
-A Next.js application that allows you to create and deploy custom feedback forms with various question types, conditional logic, and Google Sheets integration.
+A Next.js application that allows you to create and deploy custom feedback forms with various question types, conditional logic, and Google Sheets integration. The application is deployed on Vercel with a custom domain and uses GitHub Pages for form storage.
+
+## Architecture Overview
+
+The application uses a **hybrid architecture**:
+
+- **Vercel**: Hosts the Next.js application (admin panel, API routes, dynamic routes)
+- **GitHub Pages**: Stores and serves the actual form files (HTML + config)
+- **Custom Domain**: Routes everything through `ramia.us` for a seamless experience
+
+### Data Flow
+
+1. **Form Creation**: Admin panel → Vercel API → GitHub Pages deployment
+2. **Form Viewing**: User visits URL → Vercel dynamic route → GitHub Pages fetch → Form display
+3. **Form Submission**: User submits → Google Apps Script → Google Sheets
 
 ## Features
 
@@ -12,6 +26,7 @@ A Next.js application that allows you to create and deploy custom feedback forms
 - **Drag & Drop Interface**: Reorder questions easily
 - **Real-time Preview**: See form changes as you build them
 - **Responsive Design**: Works on desktop and mobile devices
+- **Custom Domain**: Professional URLs like `ramia.us/questions/[form-id]`
 
 ## Tech Stack
 
@@ -19,7 +34,8 @@ A Next.js application that allows you to create and deploy custom feedback forms
 - **Styling**: Tailwind CSS 4
 - **Drag & Drop**: @dnd-kit
 - **UI Components**: Radix UI primitives
-- **Deployment**: GitHub Pages integration via GitHub API
+- **Deployment**: Vercel with custom domain
+- **Form Storage**: GitHub Pages
 - **Data Storage**: Google Sheets via Google Apps Script
 
 ## Getting Started
@@ -30,6 +46,8 @@ A Next.js application that allows you to create and deploy custom feedback forms
 - npm, yarn, or pnpm
 - GitHub account with a repository
 - Google account for Google Sheets integration
+- Vercel account for deployment
+- Custom domain (optional but recommended)
 
 ### Installation
 
@@ -77,19 +95,25 @@ const GITHUB_REPO = "your-username/your-repo-name";
    - Deploy as a web app (set access to "Anyone")
    - Copy the deployment URL and update `GOOGLE_SCRIPT_URL` in your environment variables
 
-### Running the Application
+### Vercel Deployment
 
-```bash
-npm run dev
-```
+1. Connect your GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+### Custom Domain Setup
+
+1. In Vercel dashboard, go to your project settings
+2. Navigate to "Domains" section
+3. Add your custom domain (e.g., `ramia.us`)
+4. Vercel will provide DNS records to configure
+5. Update your domain registrar with the provided DNS records
 
 ## Usage
 
 ### Creating Forms
 
-1. Navigate to `/admin` and enter your admin password
+1. Navigate to `https://your-domain.com/admin` and enter your admin password
 2. Fill in the form details:
    - **Title**: The form title that will be displayed
    - **Description**: Optional description or instructions
@@ -112,16 +136,22 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 5. Click "Create Form" to deploy
 
-### Form Deployment
+### Form Deployment Process
 
 When you create a form, the application:
-1. Generates a unique 6-character ID
-2. Creates a JSON configuration file
-3. Deploys the form HTML template
-4. Commits both files to your GitHub repository
-5. Returns a shareable URL
+
+1. **Generates a unique 6-character ID** (e.g., `jK3erp`)
+2. **Creates a JSON configuration file** with form settings and questions
+3. **Deploys the form HTML template** with embedded configuration
+4. **Commits both files to GitHub** via GitHub API
+5. **GitHub Pages automatically deploys** the files (takes 1-2 minutes)
+6. **Returns a shareable URL** like `https://ramia.us/questions/jK3erp/`
+
+### Form Access
 
 Forms are accessible at: `https://your-domain.com/questions/{form-id}/`
+
+The dynamic route fetches the form data from GitHub Pages and renders it seamlessly.
 
 ### Response Collection
 
@@ -140,6 +170,7 @@ src/
 │   ├── admin/           # Form creation interface
 │   ├── api/
 │   │   ├── create-page/ # GitHub deployment API
+│   │   ├── forms/       # Form data serving API
 │   │   └── proxy/       # CORS proxy for Google Apps Script
 │   ├── questions/       # Dynamic form pages
 │   └── globals.css      # Global styles
@@ -152,13 +183,19 @@ public/
 └── template/
     └── index.html       # Form template
 
+docs/
+└── question/            # Form files deployed to GitHub Pages
+    └── [form-id]/
+        ├── config.json  # Form configuration
+        └── index.html   # Form template
+
 google-apps-script-jsonp.js  # Google Apps Script for data collection
 ```
 
 ## API Endpoints
 
 ### POST /api/create-page
-Creates and deploys a new form.
+Creates and deploys a new form to GitHub Pages.
 
 **Request Body:**
 ```json
@@ -181,7 +218,18 @@ Creates and deploys a new form.
 **Response:**
 ```json
 {
-  "link": "https://your-domain.com/questions/abc123/"
+  "link": "https://ramia.us/questions/abc123/"
+}
+```
+
+### GET /api/forms/[id]
+Serves form data by fetching from GitHub Pages.
+
+**Response:**
+```json
+{
+  "config": { /* form configuration */ },
+  "template": "<html>...</html>"
 }
 ```
 
@@ -203,21 +251,23 @@ Update these constants in `src/app/api/create-page/route.ts`:
 - `GITHUB_BRANCH`: Branch to deploy to (usually "main")
 - `TARGET_PATH`: Directory path for form files
 
-## Deployment
+## Deployment Architecture
 
-### Vercel (Recommended)
+### Vercel (Production)
+- **Domain**: `ramia.us` (custom domain)
+- **Admin Panel**: `https://ramia.us/admin`
+- **Form URLs**: `https://ramia.us/questions/[form-id]/`
+- **API Routes**: Serverless functions for form creation and serving
 
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+### GitHub Pages (Form Storage)
+- **Domain**: `https://nbramia.github.io/questions/`
+- **Form Files**: `https://nbramia.github.io/questions/question/[form-id]/`
+- **Automatic Deployment**: Triggered by GitHub API commits
 
-### Other Platforms
-
-The application can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
+### Data Flow
+1. **Form Creation**: Vercel API → GitHub API → GitHub Pages
+2. **Form Viewing**: Vercel Dynamic Route → GitHub Pages fetch → Render
+3. **Form Submission**: Client → Google Apps Script → Google Sheets
 
 ## Customization
 
@@ -248,10 +298,18 @@ The Google Apps Script can be modified to:
 2. **Google Sheets Not Updating**: Verify the spreadsheet ID in the Apps Script
 3. **CORS Errors**: Ensure the Google Apps Script is deployed as a web app
 4. **Forms Not Loading**: Check that GitHub Pages is enabled for your repository
+5. **404 Errors on Forms**: Wait 1-2 minutes for GitHub Pages deployment
+6. **Custom Domain Issues**: Verify DNS records are configured correctly
 
 ### Debug Mode
 
 Enable console logging by adding `console.log` statements in the template JavaScript or checking browser developer tools.
+
+### Deployment Timing
+
+- **Vercel**: Instant deployment
+- **GitHub Pages**: 1-2 minute delay after commit
+- **Form Availability**: Forms may take 1-2 minutes to become accessible
 
 ## Contributing
 

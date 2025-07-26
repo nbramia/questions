@@ -39,11 +39,18 @@ export async function GET(
       return NextResponse.json({ error: "Form template not found" }, { status: 404 });
     }
     
-    const templateHtml = await templateResponse.text();
+    let templateHtml = await templateResponse.text();
     
-    return NextResponse.json({
-      config,
-      template: templateHtml
+    // Inject the config into the template
+    templateHtml = templateHtml.replace(
+      'const configPath = "./config.json";',
+      `const config = ${JSON.stringify(config)};`
+    );
+    
+    return new NextResponse(templateHtml, {
+      headers: {
+        'Content-Type': 'text/html',
+      },
     });
   } catch (error) {
     console.error('Error loading form:', error);
