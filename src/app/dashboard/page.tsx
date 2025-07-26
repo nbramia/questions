@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,11 +33,28 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const fetchForms = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/forms");
+      if (response.ok) {
+        const data = await response.json();
+        setForms(data.forms || []);
+      } else {
+        setError("Failed to fetch forms");
+      }
+    } catch (err) {
+      setError("Error loading forms");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (authenticated) {
       fetchForms();
     }
-  }, [authenticated]);
+  }, [authenticated, fetchForms]);
 
   // Handle countdown timers for updating forms
   useEffect(() => {
@@ -65,24 +82,7 @@ export default function AdminDashboard() {
     return () => {
       timers.forEach(timer => clearInterval(timer));
     };
-  }, [updatingForms]);
-
-  const fetchForms = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/forms");
-      if (response.ok) {
-        const data = await response.json();
-        setForms(data.forms || []);
-      } else {
-        setError("Failed to fetch forms");
-      }
-    } catch (err) {
-      setError("Error loading forms");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [updatingForms, fetchForms]);
 
   const handleLogin = () => {
     if (auth === PASSWORD) {

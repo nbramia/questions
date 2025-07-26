@@ -24,6 +24,7 @@ interface FormConfig {
   }[];
   googleScriptUrl: string;
   expires_at?: string;
+  darkMode?: boolean;
 }
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const id = nanoid(6);
-    const { title, description, expiration, enforceUnique, questions } = body;
+    const { title, description, expiration, enforceUnique, questions, darkMode } = body;
 
     console.log("Creating form with ID:", id);
 
@@ -62,6 +63,11 @@ export async function POST(req: Request) {
     // Only include expires_at if there's actually an expiration
     if (parsedExpiration !== null) {
       config.expires_at = parsedExpiration;
+    }
+    
+    // Include dark mode setting if provided
+    if (darkMode !== undefined) {
+      config.darkMode = darkMode;
     }
     
     const configContent = JSON.stringify(config, null, 2);

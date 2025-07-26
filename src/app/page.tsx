@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 
 export default function RootPage() {
   const [auth, setAuth] = useState("");
@@ -52,11 +53,14 @@ export default function RootPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center font-sans bg-gray-50">
-      <Card className="p-6 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center font-sans bg-gray-50 dark:bg-gray-900">
+      <Card className="p-6 w-full max-w-md dark:bg-gray-800 dark:border-gray-700">
         <CardContent>
-          <CardTitle className="mb-4 text-center">Welcome</CardTitle>
-          <p className="text-gray-600 text-center mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle className="text-center flex-1">Welcome</CardTitle>
+            <DarkModeToggle />
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
             Manage feedback forms and create new ones.
           </p>
           <div className="space-y-3">

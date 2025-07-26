@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
+import { useDarkMode } from "@/lib/dark-mode";
 import {
   DndContext,
   closestCenter,
@@ -452,8 +454,10 @@ export default function AdminCreatePage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrCodeData, setQRCodeData] = useState("");
   const [editingFormId, setEditingFormId] = useState<string | null>(null); // Track if we're editing
+  const [darkMode, setDarkMode] = useState(false); // Track dark mode for form publishing
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const { isDark } = useDarkMode();
 
   // Check for existing authentication on mount
   useEffect(() => {
@@ -726,6 +730,7 @@ export default function AdminCreatePage() {
       expiration,
       enforceUnique,
       questions,
+      darkMode: isDark, // Include the current dark mode setting
     };
   
     try {
@@ -851,13 +856,14 @@ export default function AdminCreatePage() {
     );
 
   return (
-    <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50">
+    <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {editingFormId ? `Edit Form (${editingFormId})` : "Create New Form"}
           </h1>
           <div className="flex gap-3">
+            <DarkModeToggle />
             <Button 
               onClick={() => {
                 localStorage.removeItem('adminAuthenticated');
@@ -879,54 +885,74 @@ export default function AdminCreatePage() {
         </div>
         
         {/* Form Configuration Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
-          <h2 className="text-xl font-semibold mb-6 text-gray-800">Form Details</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Form Details</h2>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={submitting || !title.trim() || questions.some(q => !q.label.trim())}
+              className={`px-6 py-2 text-white cursor-pointer ${
+                submitting || !title.trim() || questions.some(q => !q.label.trim())
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-700 hover:bg-blue-800'
+              }`}
+            >
+              {submitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  {editingFormId ? "Updating..." : "Creating..."}
+                </div>
+              ) : (
+                editingFormId ? "Update Form" : "Publish Form"
+              )}
+            </Button>
+          </div>
           
           <div className="space-y-6">
             <div>
-              <Label className="block text-sm font-medium text-gray-700 mb-2">Title</Label>
+              <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</Label>
           <Input
                 value={title} 
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
-                className="w-full"
+                className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="Enter form title..."
               />
             </div>
             
             <div>
-              <Label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</Label>
+              <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description (Optional)</Label>
               <Textarea 
                 value={description} 
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 placeholder="Add a description or instructions for respondents?"
-                className="min-h-[100px] w-full"
+                className="min-h-[100px] w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
           </div>
         </div>
 
         {/* Settings Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-8 mb-8">
-          <h2 className="text-xl font-semibold mb-6 text-gray-800">Form Settings</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8 mb-8">
+          <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-white">Form Settings</h2>
           
           <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="flex items-center gap-3">
                 <Switch
                   checked={expirationNever}
                   onCheckedChange={setExpirationNever}
                 />
-                <Label className="text-sm font-medium text-gray-700">Never Expire</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Never Expire</Label>
               </div>
               {!expirationNever && (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">Expires in:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Expires in:</span>
                   <Input
                     type="number"
                     min="1"
                     value={expirationValue}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpirationValue(e.target.value)}
-                    className="w-20"
+                    className="w-20 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                   <div className="relative">
                                       <select
@@ -1015,7 +1041,11 @@ export default function AdminCreatePage() {
               <Button 
                 onClick={handleSubmit} 
                 disabled={submitting || !title.trim() || questions.some(q => !q.label.trim())}
-                className="px-8 py-2 bg-blue-700 hover:bg-blue-800 text-white cursor-pointer"
+                className={`px-8 py-2 text-white cursor-pointer ${
+                  submitting || !title.trim() || questions.some(q => !q.label.trim())
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-700 hover:bg-blue-800'
+                }`}
               >
                 {submitting ? (
                   <div className="flex items-center gap-2">
