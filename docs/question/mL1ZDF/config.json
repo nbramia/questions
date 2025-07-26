@@ -1,0 +1,42 @@
+{
+  "id": "mL1ZDF",
+  "title": "lkmlkmlkm",
+  "expires_at": "2025-07-26T19:16:36.642Z",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "type": "mcq",
+      "label": "lkmlkm",
+      "options": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "type": "text",
+      "label": "kjnkj",
+      "options": []
+    },
+    {
+      "type": "checkbox",
+      "label": "uytguyg",
+      "options": [
+        "s",
+        "d",
+        "f",
+        "y"
+      ]
+    },
+    {
+      "type": "yesno",
+      "label": "dfxfdx",
+      "options": []
+    },
+    {
+      "type": "scale",
+      "label": "oijijoij",
+      "options": []
+    }
+  ]
+}
