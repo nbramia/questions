@@ -1,6 +1,6 @@
 // src/app/admin/page.tsx
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -448,6 +448,7 @@ export default function AdminCreatePage() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD; 
 
@@ -457,6 +458,21 @@ export default function AdminCreatePage() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    if (result) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 0) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [result]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -588,6 +604,14 @@ export default function AdminCreatePage() {
       const data = await res.json();
       if (res.ok && data.link) {
         setResult(data.link);
+        setCountdown(60); // Start 60 second countdown
+        // Auto-scroll to bottom after a brief delay to ensure the modal is rendered
+        setTimeout(() => {
+          window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
       } else {
         throw new Error("API call failed");
       }
@@ -793,6 +817,38 @@ export default function AdminCreatePage() {
                 <h3 className="text-lg font-semibold text-green-800">Form Created Successfully!</h3>
                 <p className="text-green-700 mt-1">Your form has been deployed and is ready to use.</p>
                 <p className="text-yellow-700 mt-2 text-sm">Note: It may take 1-2 minutes for the form to become available due to deployment timing.</p>
+                
+                {/* Countdown Timer */}
+                {countdown > 0 && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-blue-700 font-medium">
+                        Form will be ready in: <span className="font-bold">{countdown}s</span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {countdown === 0 && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-green-700 font-medium">
+                        Form should now be ready to use!
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2 mt-3">
                   <a 
                     href={result} 
@@ -817,7 +873,6 @@ export default function AdminCreatePage() {
                           button.innerHTML = `
                             <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
                           `;
                           setTimeout(() => {
                             button.innerHTML = originalHTML;
