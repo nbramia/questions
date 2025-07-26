@@ -119,24 +119,25 @@ export async function DELETE(
 
     console.log(`Found ${filesToDelete.length} files to delete for form ${formId}`);
 
-    // Create a new tree without the form files
-    const remainingItems = treeData.tree.filter(item => 
-      !item.path?.startsWith(`${FORMS_PATH}/${formId}/`)
-    ).map(item => ({
-      path: item.path!,
-      mode: item.mode as "100644",
-      type: item.type as "blob" | "tree",
-      sha: item.sha!,
-    }));
+    // Create a new tree by removing the form files
+    // We'll create a tree with all items except the ones we want to delete
+    const treeItems = treeData.tree
+      .filter(item => !item.path?.startsWith(`${FORMS_PATH}/${formId}/`))
+      .map(item => ({
+        path: item.path!,
+        mode: item.mode as "100644" | "040000",
+        type: item.type as "blob" | "tree",
+        sha: item.sha!,
+      }));
 
-    console.log(`Creating new tree with ${remainingItems.length} remaining items`);
+    console.log(`Creating new tree with ${treeItems.length} items (removed ${filesToDelete.length} files)`);
 
     // Create the new tree
     const { data: newTree } = await octokit.git.createTree({
       owner,
       repo,
       base_tree: baseTree,
-      tree: remainingItems,
+      tree: treeItems,
     });
 
     console.log(`Created new tree with SHA: ${newTree.sha}`);

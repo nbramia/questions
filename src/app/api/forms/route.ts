@@ -25,11 +25,27 @@ export async function GET() {
 
     const [owner, repo] = GITHUB_REPO.split("/");
     
+    // Get the current commit SHA first
+    const { data: refData } = await octokit.git.getRef({ 
+      owner, 
+      repo, 
+      ref: `heads/${GITHUB_BRANCH}` 
+    });
+    const latestCommitSha = refData.object.sha;
+
+    // Get the current tree
+    const { data: commitData } = await octokit.git.getCommit({ 
+      owner, 
+      repo, 
+      commit_sha: latestCommitSha 
+    });
+    const baseTree = commitData.tree.sha;
+    
     // Get the tree for the forms directory
     const { data: treeData } = await octokit.git.getTree({
       owner,
       repo,
-      tree_sha: GITHUB_BRANCH,
+      tree_sha: baseTree,
       recursive: "true",
     });
 
