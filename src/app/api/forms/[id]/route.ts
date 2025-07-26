@@ -23,9 +23,30 @@ export async function GET(
     }
     
     const config = await configResponse.json();
-    return NextResponse.json(config);
+    
+    // Fetch the template HTML from GitHub Pages
+    const templateUrl = `https://nbramia.github.io/questions/question/${id}/index.html`;
+    const templateResponse = await fetch(templateUrl, {
+      cache: 'no-store',
+      headers: {
+        'Accept': 'text/html',
+        'User-Agent': 'Mozilla/5.0 (compatible; FormLoader/1.0)'
+      }
+    });
+    
+    if (!templateResponse.ok) {
+      console.error('Template not found:', templateResponse.status);
+      return NextResponse.json({ error: "Form template not found" }, { status: 404 });
+    }
+    
+    const templateHtml = await templateResponse.text();
+    
+    return NextResponse.json({
+      config,
+      template: templateHtml
+    });
   } catch (error) {
-    console.error('Error loading form config:', error);
+    console.error('Error loading form:', error);
     return NextResponse.json({ error: "Form not found" }, { status: 404 });
   }
 } 
