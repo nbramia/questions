@@ -40,6 +40,11 @@ export async function GET() {
       item.path !== FORMS_PATH
     );
 
+    console.log(`Found ${formDirectories.length} form directories in tree`);
+    formDirectories.forEach(dir => {
+      console.log(`Directory: ${dir.path}`);
+    });
+
     const forms: FormInfo[] = [];
 
     // Fetch config.json for each form directory
