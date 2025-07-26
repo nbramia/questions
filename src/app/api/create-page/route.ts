@@ -9,7 +9,19 @@ interface FormConfig {
   title: string;
   description?: string;
   enforceUnique: boolean;
-  questions: any[];
+  questions: {
+    id: string;
+    type: string;
+    label: string;
+    options: string[];
+    scaleRange?: number;
+    skipLogic?: {
+      enabled: boolean;
+      dependsOn: string;
+      condition: string;
+      value: string;
+    };
+  }[];
   googleScriptUrl: string;
   expires_at?: string;
 }
