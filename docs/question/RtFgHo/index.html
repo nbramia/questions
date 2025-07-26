@@ -1,0 +1,270 @@
+<!-- public/template/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white shadow p-6 max-w-xl w-full rounded">
+      <h1 id="form-title" class="text-xl font-semibold mb-4">Loading...</h1>
+      <div id="form-description" class="text-gray-600 mb-6 hidden"></div>
+      <form id="feedback-form" class="space-y-4"></form>
+      <div id="submitted-msg" class="text-green-600 mt-4 hidden">
+        Thank you for your feedback!
+      </div>
+      <div id="error-msg" class="text-red-600 mt-4 hidden">
+        Error submitting your response.
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("feedback-form");
+      const formTitle = document.getElementById("form-title");
+      const formDescription = document.getElementById("form-description");
+      const submittedMsg = document.getElementById("submitted-msg");
+      const errorMsg = document.getElementById("error-msg");
+      const configPath = "./config.json";
+
+      let config = null;
+
+      async function getIP() {
+        try {
+          const res = await fetch("https://api.ipify.org?format=json");
+          const data = await res.json();
+          return data.ip;
+        } catch (err) {
+          return "unknown";
+        }
+      }
+
+      function hasSubmitted(id) {
+        return localStorage.getItem("submitted_" + id);
+      }
+
+      function markSubmitted(id) {
+        localStorage.setItem("submitted_" + id, "true");
+      }
+
+      function disableForm() {
+        form.innerHTML = "<p class='text-gray-700'>This form is no longer accepting responses.</p>";
+      }
+
+      function renderForm(cfg) {
+        formTitle.textContent = cfg.title;
+        
+        // Show description if available
+        if (cfg.description && cfg.description.trim() !== "") {
+          formDescription.textContent = cfg.description;
+          formDescription.classList.remove("hidden");
+        } else {
+          formDescription.classList.add("hidden");
+        }
+
+        const now = new Date();
+        console.log("Form config:", cfg);
+        console.log("Expires at:", cfg.expires_at);
+        console.log("Current time:", now.toISOString());
+        
+        if (cfg.expires_at && cfg.expires_at !== null && cfg.expires_at !== "") {
+          const exp = new Date(cfg.expires_at);
+          console.log("Expiration time:", exp.toISOString());
+          if (now > exp) {
+            console.log("Form expired, disabling...");
+            return disableForm();
+          }
+        } else {
+          console.log("No expiration set, form will never expire");
+        }
+        if (cfg.enforceUnique && hasSubmitted(cfg.id)) return disableForm();
+
+        cfg.questions.forEach((q, i) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "space-y-1";
+
+          const label = document.createElement("label");
+          label.textContent = q.label;
+          label.className = "block font-medium";
+
+          wrapper.appendChild(label);
+
+          if (q.type === "text") {
+            const input = document.createElement("textarea");
+            input.name = q.id || `q${i}`;
+            input.className = "w-full p-2 border rounded";
+            wrapper.appendChild(input);
+          } else if (q.type === "yesno") {
+            ["Yes", "No"].forEach((val) => {
+              const opt = document.createElement("div");
+              opt.className = "flex items-center gap-2";
+              opt.innerHTML = `<input type="radio" name="${q.id || `q${i}`}" value="${val}" class="form-radio"> <span>${val}</span>`;
+              wrapper.appendChild(opt);
+            });
+          } else if (q.type === "mcq") {
+            q.options.forEach((opt) => {
+              const el = document.createElement("div");
+              el.className = "flex items-center gap-2";
+              el.innerHTML = `<input type="radio" name="${q.id || `q${i}`}" value="${opt}" class="form-radio"> <span>${opt}</span>`;
+              wrapper.appendChild(el);
+            });
+          } else if (q.type === "checkbox") {
+            q.options.forEach((opt) => {
+              const el = document.createElement("div");
+              el.className = "flex items-center gap-2";
+              el.innerHTML = `<input type="checkbox" name="${q.id || `q${i}`}" value="${opt}" class="form-checkbox"> <span>${opt}</span>`;
+              wrapper.appendChild(el);
+            });
+          } else if (q.type === "scale") {
+            const sel = document.createElement("select");
+            sel.name = q.id || `q${i}`;
+            sel.className = "w-full border rounded p-2";
+            for (let s = 1; s <= 5; s++) {
+              const opt = document.createElement("option");
+              opt.value = s;
+              opt.textContent = s;
+              sel.appendChild(opt);
+            }
+            wrapper.appendChild(sel);
+          }
+
+          form.appendChild(wrapper);
+          
+          // Add horizontal bar between questions (except after the last one)
+          if (i < cfg.questions.length - 1) {
+            const divider = document.createElement("div");
+            divider.className = "h-px bg-gray-200 my-6";
+            form.appendChild(divider);
+          }
+        });
+
+        const submitBtn = document.createElement("button");
+        submitBtn.textContent = "Submit";
+        submitBtn.className = "bg-blue-600 text-white px-4 py-2 rounded";
+        submitBtn.type = "submit";
+        form.appendChild(submitBtn);
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          
+          // Immediately disable the submit button
+          const submitBtn = form.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+            submitBtn.className = "bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed";
+          }
+          
+          const data = new FormData(form);
+          const entries = Object.fromEntries(data.entries());
+          const ip = await getIP();
+
+          // Create a mapping of question keys to their labels
+          const questionLabels = {};
+          cfg.questions.forEach((q, i) => {
+            const questionKey = q.id || `q${i}`;
+            questionLabels[questionKey] = q.label;
+          });
+
+          const submission = {
+            question_id: cfg.id,
+            form_title: cfg.title,
+            timestamp: new Date().toISOString(),
+            answers: entries,
+            question_labels: questionLabels,
+            enforceUnique: cfg.enforceUnique,
+            ip,
+            user_agent: navigator.userAgent,
+          };
+
+          try {
+            // Call Google Apps Script directly with JSONP approach
+            const script = document.createElement('script');
+            const callbackName = 'callback_' + Date.now();
+            
+            // Create a global callback function
+            window[callbackName] = function(response) {
+              if (response.success) {
+                markSubmitted(cfg.id);
+                form.classList.add("hidden");
+                submittedMsg.classList.remove("hidden");
+              } else {
+                // Show specific error message if available
+                if (response.error) {
+                  errorMsg.textContent = response.error;
+                }
+                errorMsg.classList.remove("hidden");
+                
+                // Re-enable the submit button on error
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = "Submit";
+                  submitBtn.className = "bg-blue-600 text-white px-4 py-2 rounded";
+                }
+              }
+              // Clean up
+              delete window[callbackName];
+              document.head.removeChild(script);
+            };
+            
+            // Create the JSONP request
+            const params = new URLSearchParams({
+              callback: callbackName,
+              data: JSON.stringify(submission)
+            });
+            
+            script.src = cfg.googleScriptUrl + '?' + params.toString();
+            document.head.appendChild(script);
+            
+            // Set a timeout in case the script doesn't load
+            setTimeout(() => {
+              if (window[callbackName]) {
+                errorMsg.classList.remove("hidden");
+                errorMsg.textContent = "Request timed out. Please try again.";
+                
+                // Re-enable the submit button on timeout
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = "Submit";
+                  submitBtn.className = "bg-blue-600 text-white px-4 py-2 rounded";
+                }
+                
+                delete window[callbackName];
+                document.head.removeChild(script);
+              }
+            }, 10000);
+            
+            return; // Don't continue with the rest of the function
+
+            if (res.ok) {
+              markSubmitted(cfg.id);
+              form.classList.add("hidden");
+              submittedMsg.classList.remove("hidden");
+            } else {
+              throw new Error("Submit failed");
+            }
+          } catch (err) {
+            errorMsg.classList.remove("hidden");
+          }
+        });
+      }
+
+      fetch(configPath)
+        .then((res) => res.json())
+        .then((cfg) => {
+          config = cfg;
+          renderForm(cfg);
+        })
+        .catch(() => {
+          form.innerHTML = "<p class='text-red-600'>Failed to load form.</p>";
+        });
+    </script>
+  </body>
+</html>
