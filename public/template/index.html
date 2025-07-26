@@ -182,6 +182,10 @@
                 if (e.target.type !== 'radio') {
                   const radio = this.querySelector('input[type="radio"]');
                   radio.checked = true;
+                  // Trigger visibility update after manual toggle
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -205,6 +209,10 @@
                 if (e.target.type !== 'radio') {
                   const radio = this.querySelector('input[type="radio"]');
                   radio.checked = true;
+                  // Trigger visibility update after manual toggle
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -228,6 +236,10 @@
                 if (e.target.type !== 'radio') {
                   const radio = this.querySelector('input[type="radio"]');
                   radio.checked = true;
+                  // Trigger visibility update after manual toggle
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -251,6 +263,10 @@
                 if (e.target.type !== 'checkbox') {
                   const checkbox = this.querySelector('input[type="checkbox"]');
                   checkbox.checked = !checkbox.checked;
+                  // Trigger visibility update after manual toggle
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               

@@ -83,67 +83,46 @@ export async function DELETE(
 
     console.log(`Attempting to delete form ${formId}`);
 
-    // Get the current commit SHA
-    const { data: refData } = await octokit.git.getRef({ 
-      owner, 
-      repo, 
-      ref: `heads/${GITHUB_BRANCH}` 
-    });
+    // Get the latest commit SHA on the target branch
+    const { data: refData } = await octokit.git.getRef({ owner, repo, ref: `heads/${GITHUB_BRANCH}` });
     const latestCommitSha = refData.object.sha;
 
-    // Get the current tree
-    const { data: commitData } = await octokit.git.getCommit({ 
-      owner, 
-      repo, 
-      commit_sha: latestCommitSha 
-    });
-    const baseTree = commitData.tree.sha;
+    // Get the tree associated with the latest commit
+    const { data: commitData } = await octokit.git.getCommit({ owner, repo, commit_sha: latestCommitSha });
+    const baseTreeSha = commitData.tree.sha;
 
-    // Get the current tree to find files to delete
-    const { data: treeData } = await octokit.git.getTree({
-      owner,
-      repo,
-      tree_sha: baseTree,
-      recursive: "true",
-    });
+    // Grab the full tree so we can identify the exact blobs to delete
+    const { data: treeData } = await octokit.git.getTree({ owner, repo, tree_sha: baseTreeSha, recursive: "true" });
 
-    // Find files in the form directory to delete
-    const filesToDelete = treeData.tree.filter(item => 
-      item.path?.startsWith(`${FORMS_PATH}/${formId}/`) && 
-      item.type === "blob"
+    // Identify blobs under the form's directory
+    const blobsToDelete = treeData.tree.filter(
+      (item) => item.type === "blob" && item.path?.startsWith(`${FORMS_PATH}/${formId}/`)
     );
 
-    if (filesToDelete.length === 0) {
+    if (blobsToDelete.length === 0) {
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
 
-    console.log(`Found ${filesToDelete.length} files to delete for form ${formId}`);
+    console.log(`Found ${blobsToDelete.length} blobs to delete for form ${formId}`);
 
-    // Create a new tree by removing the form files
-    // We'll create a tree with all items except the ones we want to delete
-    const treeItems = treeData.tree
-      .filter(item => !item.path?.startsWith(`${FORMS_PATH}/${formId}/`))
-      .map(item => ({
-        path: item.path!,
-        mode: item.mode as "100644" | "040000",
-        type: item.type as "blob" | "tree",
-        sha: item.sha!,
-      }));
+    // Build a tree that deletes each blob (sha: null)
+    const deleteTree = blobsToDelete.map((blob) => ({
+      path: blob.path!,
+      mode: "100644" as const,
+      type: "blob" as const,
+      sha: null, // Setting sha to null tells GitHub to delete this file
+    }));
 
-    console.log(`Creating new tree with ${treeItems.length} items (removed ${filesToDelete.length} files)`);
-
-    // Create the new tree
+    // Create the new tree (based off baseTree) with deletions
     const { data: newTree } = await octokit.git.createTree({
       owner,
       repo,
-      base_tree: baseTree,
-      tree: treeItems,
+      base_tree: baseTreeSha,
+      tree: deleteTree,
     });
 
-    console.log(`Created new tree with SHA: ${newTree.sha}`);
-
-    // Create the commit
-    const { data: commit } = await octokit.git.createCommit({
+    // Commit the new tree
+    const { data: newCommit } = await octokit.git.createCommit({
       owner,
       repo,
       message: `Delete form ${formId}`,
@@ -151,15 +130,8 @@ export async function DELETE(
       parents: [latestCommitSha],
     });
 
-    console.log(`Created commit with SHA: ${commit.sha}`);
-
-    // Update the branch
-    await octokit.git.updateRef({
-      owner,
-      repo,
-      ref: `heads/${GITHUB_BRANCH}`,
-      sha: commit.sha,
-    });
+    // Update the branch ref to point to the new commit
+    await octokit.git.updateRef({ owner, repo, ref: `heads/${GITHUB_BRANCH}`, sha: newCommit.sha });
 
     console.log(`Successfully deleted form ${formId}`);
 
