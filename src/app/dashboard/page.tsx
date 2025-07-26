@@ -190,14 +190,23 @@ export default function AdminDashboard() {
     });
   };
 
-  const getTimeRemaining = (expiresAt?: string, isExpired?: boolean) => {
-    if (!expiresAt) return "No expiration";
+  const getExpirationInfo = (expiresAt?: string, status?: string) => {
+    // For disabled forms, show nothing regardless of expiration
+    if (status === 'disabled') {
+      return "";
+    }
     
+    // For active forms
+    if (!expiresAt) {
+      return "No expiration";
+    }
+    
+    // Calculate time remaining for active forms with expiration
     const now = new Date();
     const expiration = new Date(expiresAt);
     const diffMs = expiration.getTime() - now.getTime();
     
-    if (diffMs <= 0 || isExpired) return "Expired";
+    if (diffMs <= 0) return "Expired";
     
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -347,7 +356,7 @@ export default function AdminDashboard() {
                         </p>
                       )}
                       <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        ID: {form.id} • {form.updated_at && form.updated_at !== form.created_at ? 'Updated' : 'Created'}: {formatDate(form.updated_at && form.updated_at !== form.created_at ? form.updated_at : form.created_at)} • {getTimeRemaining(form.expires_at, form.isExpired)}
+                        ID: {form.id} • {form.updated_at && form.updated_at !== form.created_at ? 'Updated' : 'Created'}: {formatDate(form.updated_at && form.updated_at !== form.created_at ? form.updated_at : form.created_at)}{getExpirationInfo(form.expires_at, form.status) && ` • ${getExpirationInfo(form.expires_at, form.status)}`}
                       </div>
                       
                       {/* Primary actions - horizontal row */}
