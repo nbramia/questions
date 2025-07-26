@@ -43,8 +43,8 @@ export async function GET(
     
     // Inject the config into the template and bypass remote fetch
     templateHtml = templateHtml.replace(
-      'const configPath = "./config.json";',
-      `const config = ${JSON.stringify(config)};`
+      'let config = null;',
+      `let config = ${JSON.stringify(config)};`
     ).replace(
       /fetch\(configPath\)[\s\S]*?\.catch\(\(\) => \{[\s\S]*?\}\);/,
       'renderForm(config);'  // Call renderForm directly with injected config
