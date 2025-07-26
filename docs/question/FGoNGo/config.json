@@ -1,0 +1,14 @@
+{
+  "id": "FGoNGo",
+  "title": "testy1",
+  "expires_at": null,
+  "enforceUnique": true,
+  "questions": [
+    {
+      "type": "yesno",
+      "label": "q1",
+      "options": []
+    }
+  ],
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycby7NQ_JEBSIJSi1jPqNQPwZTa482uWP_Wz36QSS5NZYd7LzKoHpPi1HLL45suoKkksqzg/exec"
+}
