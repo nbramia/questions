@@ -1,6 +1,6 @@
 {
   "id": "l0INBi",
-  "title": "kjnkjn",
+  "title": "kjnkjnnnnnn",
   "description": "",
   "enforceUnique": false,
   "questions": [
@@ -9,6 +9,18 @@
       "type": "yesno",
       "label": "fcgfcgfcgc",
       "options": []
+    },
+    {
+      "id": "q1753561445519",
+      "type": "text",
+      "label": "lkmlkm",
+      "options": [],
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1",
+        "condition": "equals",
+        "value": "Yes"
+      }
     }
   ],
   "googleScriptUrl": "https://script.google.com/macros/s/AKfycbw-Z6SioFKc3QSrSoQBNr817ZpQOE-ZavsFZYPs3ypmccX9-o5PaeuYHndLo9jpd0RefA/exec"
