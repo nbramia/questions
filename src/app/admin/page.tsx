@@ -451,6 +451,7 @@ export default function AdminCreatePage() {
   const [countdown, setCountdown] = useState(0);
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrCodeData, setQRCodeData] = useState("");
+  const [editingFormId, setEditingFormId] = useState<string | null>(null); // Track if we're editing
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
@@ -525,6 +526,7 @@ export default function AdminCreatePage() {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const duplicateData = urlParams.get('duplicate');
+      const editData = urlParams.get('edit');
       
       if (duplicateData) {
         try {
@@ -551,6 +553,55 @@ export default function AdminCreatePage() {
           
         } catch (error) {
           console.error('Error parsing duplicate data:', error);
+        }
+      } else if (editData) {
+        try {
+          const formData = JSON.parse(decodeURIComponent(editData));
+          
+          // Set editing mode
+          setEditingFormId(formData.formId);
+          
+          // Pre-populate the form with the existing data
+          setTitle(formData.title || "");
+          setDescription(formData.description || "");
+          setEnforceUnique(formData.enforceUnique !== undefined ? formData.enforceUnique : true);
+          
+          // Handle expiration
+          if (formData.expires_at) {
+            setExpirationNever(false);
+            // Parse the expiration date and set appropriate values
+            const expirationDate = new Date(formData.expires_at);
+            const now = new Date();
+            const diffMs = expirationDate.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.ceil(diffMs / (1000 * 60));
+            
+            if (diffDays > 1) {
+              setExpirationUnit("days");
+              setExpirationValue(diffDays.toString());
+            } else if (diffHours > 1) {
+              setExpirationUnit("hours");
+              setExpirationValue(diffHours.toString());
+            } else {
+              setExpirationUnit("minutes");
+              setExpirationValue(diffMinutes.toString());
+            }
+          } else {
+            setExpirationNever(true);
+          }
+          
+          // Pre-populate questions if they exist
+          if (formData.questions && Array.isArray(formData.questions)) {
+            setQuestions(formData.questions);
+          }
+          
+          // Clear the URL parameter
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+          
+        } catch (error) {
+          console.error('Error parsing edit data:', error);
         }
       }
     }
@@ -678,7 +729,54 @@ export default function AdminCreatePage() {
     };
   
     try {
-      const res = await fetch("/api/create-page", {
+      let res;
+      let data;
+      
+      if (editingFormId) {
+        // Update existing form
+        res = await fetch(`/api/forms/${editingFormId}/update`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        
+        data = await res.json();
+        if (res.ok && data.formUrl) {
+          setResult(data.formUrl);
+          setCountdown(60); // Start 60 second countdown
+          
+          // Generate QR code SVG
+          try {
+            const QRCode = (await import('qrcode-svg')).default;
+            const qr = new QRCode({
+              content: data.formUrl,
+              padding: 4,
+              width: 256,
+              height: 256,
+              color: "#000000",
+              background: "#ffffff",
+              ecl: "M"
+            });
+            setQRCodeData(qr.svg());
+          } catch (error) {
+            console.error('Error generating QR code:', error);
+          }
+          
+          // Auto-scroll to bottom after a brief delay to ensure the modal is rendered
+          setTimeout(() => {
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: 'smooth'
+            });
+          }, 100);
+        } else {
+          throw new Error("API call failed");
+        }
+      } else {
+        // Create new form
+        res = await fetch("/api/create-page", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -686,41 +784,42 @@ export default function AdminCreatePage() {
         body: JSON.stringify(payload),
       });
   
-      const data = await res.json();
+        data = await res.json();
       if (res.ok && data.link) {
         setResult(data.link);
-        setCountdown(60); // Start 60 second countdown
-        
-        // Generate QR code SVG
-        try {
-          const QRCode = (await import('qrcode-svg')).default;
-          const qr = new QRCode({
-            content: data.link,
-            padding: 4,
-            width: 256,
-            height: 256,
-            color: "#000000",
-            background: "#ffffff",
-            ecl: "M"
-          });
-          setQRCodeData(qr.svg());
-        } catch (error) {
-          console.error('Error generating QR code:', error);
-        }
-        
-        // Auto-scroll to bottom after a brief delay to ensure the modal is rendered
-        setTimeout(() => {
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: 'smooth'
-          });
-        }, 100);
+          setCountdown(60); // Start 60 second countdown
+          
+          // Generate QR code SVG
+          try {
+            const QRCode = (await import('qrcode-svg')).default;
+            const qr = new QRCode({
+              content: data.link,
+              padding: 4,
+              width: 256,
+              height: 256,
+              color: "#000000",
+              background: "#ffffff",
+              ecl: "M"
+            });
+            setQRCodeData(qr.svg());
+          } catch (error) {
+            console.error('Error generating QR code:', error);
+          }
+          
+          // Auto-scroll to bottom after a brief delay to ensure the modal is rendered
+          setTimeout(() => {
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: 'smooth'
+            });
+          }, 100);
       } else {
         throw new Error("API call failed");
+        }
       }
     } catch (e) {
       console.error(e);
-      setResult("Error creating page");
+      setResult(editingFormId ? "Error updating form" : "Error creating form");
     }
   
     setSubmitting(false);
@@ -755,7 +854,9 @@ export default function AdminCreatePage() {
     <div className="min-h-screen px-4 sm:px-8 pt-12 pb-24 font-sans bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Feedback Page</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {editingFormId ? `Edit Form (${editingFormId})` : "Create New Form"}
+          </h1>
           <div className="flex gap-3">
             <Button 
               onClick={() => {
@@ -919,10 +1020,10 @@ export default function AdminCreatePage() {
                 {submitting ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creating...
+                    {editingFormId ? "Updating..." : "Creating..."}
                   </div>
                 ) : (
-                  "Create Form"
+                  editingFormId ? "Update Form" : "Publish Form"
                 )}
           </Button>
             </div>

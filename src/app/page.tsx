@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [updatingForms, setUpdatingForms] = useState<{[key: string]: number}>({}); // Track countdown for each form
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
@@ -37,6 +38,34 @@ export default function AdminDashboard() {
       fetchForms();
     }
   }, [authenticated]);
+
+  // Handle countdown timers for updating forms
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+    
+    Object.entries(updatingForms).forEach(([formId, countdown]) => {
+      if (countdown > 0) {
+        const timer = setInterval(() => {
+          setUpdatingForms(prev => {
+            const newState = { ...prev };
+            if (newState[formId] > 0) {
+              newState[formId] = newState[formId] - 1;
+            } else {
+              delete newState[formId];
+              // Refresh forms list when countdown reaches 0
+              fetchForms();
+            }
+            return newState;
+          });
+        }, 1000);
+        timers.push(timer);
+      }
+    });
+
+    return () => {
+      timers.forEach(timer => clearInterval(timer));
+    };
+  }, [updatingForms]);
 
   const fetchForms = async () => {
     try {
@@ -269,6 +298,50 @@ export default function AdminDashboard() {
                             if (configMatch) {
                               const config = JSON.parse(configMatch[1]);
                               
+                              // Navigate to admin page with the form data for editing
+                              const formData = encodeURIComponent(JSON.stringify({
+                                formId: form.id, // Include the original form ID for editing
+                                title: config.title,
+                                description: config.description || '',
+                                questions: config.questions,
+                                enforceUnique: config.enforceUnique,
+                                expires_at: config.expires_at, // Keep original expiration
+                              }));
+                              
+                              window.open(`/admin?edit=${formData}`, '_blank');
+                            } else {
+                              alert('Could not extract form data');
+                            }
+                          } else {
+                            alert('Failed to load form data');
+                          }
+                        } catch (err) {
+                          alert('Error loading form data');
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </Button>
+                    
+                    <Button
+                      onClick={async () => {
+                        try {
+                          // Fetch the form config to get the data
+                          const response = await fetch(`/api/forms/${form.id}`);
+                          if (response.ok) {
+                            const htmlContent = await response.text();
+                            
+                            // Extract the config from the HTML (it's injected as a script)
+                            const configMatch = htmlContent.match(/let config = ({.*?});/);
+                            if (configMatch) {
+                              const config = JSON.parse(configMatch[1]);
+                              
                               // Navigate to admin page with the form data
                               const formData = encodeURIComponent(JSON.stringify({
                                 title: `${config.title} (Copy)`,
@@ -278,7 +351,7 @@ export default function AdminDashboard() {
                                 // Don't include expiration - let user set it fresh
                               }));
                               
-                              window.location.href = `/admin?duplicate=${formData}`;
+                              window.open(`/admin?duplicate=${formData}`, '_blank');
                             } else {
                               alert('Could not extract form data');
                             }
@@ -302,6 +375,10 @@ export default function AdminDashboard() {
                     <Button
                       onClick={async () => {
                         const action = form.status === 'active' ? 'disable' : 'enable';
+                        
+                        // Start updating state with 60 second countdown
+                        setUpdatingForms(prev => ({ ...prev, [form.id]: 60 }));
+                        
                         try {
                           const response = await fetch(`/api/forms/${form.id}/toggle`, {
                             method: 'POST',
@@ -311,23 +388,42 @@ export default function AdminDashboard() {
                             body: JSON.stringify({ action }),
                           });
                           if (response.ok) {
-                            // Refresh the forms list
-                            fetchForms();
+                            // Countdown will handle the refresh when it reaches 0
                           } else {
                             alert(`Failed to ${action} form`);
+                            // Remove from updating state on error
+                            setUpdatingForms(prev => {
+                              const newState = { ...prev };
+                              delete newState[form.id];
+                              return newState;
+                            });
                           }
                         } catch (err) {
                           alert(`Error ${action}ing form`);
+                          // Remove from updating state on error
+                          setUpdatingForms(prev => {
+                            const newState = { ...prev };
+                            delete newState[form.id];
+                            return newState;
+                          });
                         }
                       }}
                       variant="outline"
                       size="sm"
-                      className="cursor-pointer"
+                      className={`cursor-pointer ${
+                        updatingForms[form.id] !== undefined 
+                          ? 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200' 
+                          : ''
+                      }`}
+                      disabled={updatingForms[form.id] !== undefined}
                     >
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
                       </svg>
-                      {form.status === 'active' ? 'Disable' : 'Enable'}
+                      {updatingForms[form.id] !== undefined 
+                        ? `Updating (${updatingForms[form.id]}s)` 
+                        : (form.status === 'active' ? 'Disable' : 'Enable')
+                      }
                     </Button>
                     
                     <Button
