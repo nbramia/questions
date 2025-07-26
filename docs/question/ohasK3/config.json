@@ -1,0 +1,35 @@
+{
+  "id": "ohasK3",
+  "title": "gfcgfc",
+  "description": "testy test",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "type": "checkbox",
+      "label": "checky",
+      "options": [
+        "lkm",
+        "kjnjkn",
+        "aaaa"
+      ]
+    },
+    {
+      "type": "likert",
+      "label": "lik",
+      "options": [
+        "Strongly agree",
+        "Somewhat agree",
+        "Neither agree nor disagree",
+        "Somewhat disagree",
+        "Strongly disagree"
+      ]
+    },
+    {
+      "type": "scale",
+      "label": "scaly",
+      "options": [],
+      "scaleRange": 10
+    }
+  ],
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycbw-Z6SioFKc3QSrSoQBNr817ZpQOE-ZavsFZYPs3ypmccX9-o5PaeuYHndLo9jpd0RefA/exec"
+}
