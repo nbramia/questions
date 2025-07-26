@@ -533,13 +533,14 @@
         }
 
         let currentValue = "";
+        let selectedValuesArray = [];
         if (dependentInput.type === "radio") {
           const checkedInput = form.querySelector(`[name="${dependentInput.name}"]:checked`);
           currentValue = checkedInput ? checkedInput.value : "";
         } else if (dependentInput.type === "checkbox") {
           const checkedInputs = form.querySelectorAll(`[name="${dependentInput.name}"]:checked`);
-          const selectedValues = Array.from(checkedInputs).map(input => input.value);
-          currentValue = selectedValues.join(", ");
+          selectedValuesArray = Array.from(checkedInputs).map(input => input.value);
+          currentValue = selectedValuesArray.join(", ");
         } else {
           // For text, textarea, scale, and other input types
           currentValue = dependentInput.value || "";
@@ -552,17 +553,15 @@
           case "not_equals":
             return currentValue !== q.skipLogic.value;
           case "includes":
-            // For checkbox questions, check if the comma-separated values include the required value
+            // For checkbox questions, check if the selected values include the required value
             if (dependentQuestion.type === "checkbox") {
-              const selectedValues = currentValue.split(", ").filter(v => v.trim() !== "");
-              return selectedValues.includes(q.skipLogic.value);
+              return selectedValuesArray.includes(q.skipLogic.value);
             }
             return currentValue === q.skipLogic.value;
           case "not_includes":
-            // For checkbox questions, check if the comma-separated values don't include the required value
+            // For checkbox questions, check if the selected values don't include the required value
             if (dependentQuestion.type === "checkbox") {
-              const selectedValues = currentValue.split(", ").filter(v => v.trim() !== "");
-              return !selectedValues.includes(q.skipLogic.value);
+              return !selectedValuesArray.includes(q.skipLogic.value);
             }
             return currentValue !== q.skipLogic.value;
           case "greater_than":
