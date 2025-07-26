@@ -13,7 +13,10 @@ interface FormInfo {
   title: string;
   description?: string;
   created_at?: string;
+  updated_at?: string;
+  expires_at?: string;
   status: 'active' | 'disabled';
+  isExpired: boolean;
   url: string;
 }
 
@@ -80,18 +83,20 @@ export async function GET() {
         if ('content' in configData && typeof configData.content === 'string') {
           const config = JSON.parse(Buffer.from(configData.content, 'base64').toString());
           
-          // Get commit info for creation date
+          // Get commit info for creation and update dates
           const { data: commits } = await octokit.repos.listCommits({
             owner,
             repo,
             path: `${FORMS_PATH}/${formId}/config.json`,
-            per_page: 1,
+            per_page: 2,
           });
 
-          const created_at = commits[0]?.commit?.author?.date;
+          const created_at = commits[commits.length - 1]?.commit?.author?.date; // First commit (oldest)
+          const updated_at = commits[0]?.commit?.author?.date; // Latest commit
 
-          // Check if form is expired
+          // Check if form is expired or manually disabled
           let status: 'active' | 'disabled' = 'active';
+          let isExpired = false;
           console.log(`Form ${formId}: expires_at = ${config.expires_at}`);
           if (config.expires_at && config.expires_at !== null && config.expires_at !== "" && config.expires_at !== undefined) {
             const now = new Date();
@@ -99,6 +104,7 @@ export async function GET() {
             console.log(`Form ${formId}: now = ${now.toISOString()}, expiration = ${expirationDate.toISOString()}`);
             if (now > expirationDate) {
               status = 'disabled';
+              isExpired = true;
               console.log(`Form ${formId}: EXPIRED - setting status to disabled`);
             }
           }
@@ -108,7 +114,10 @@ export async function GET() {
             title: config.title || "Untitled Form",
             description: config.description,
             created_at,
+            updated_at,
+            expires_at: config.expires_at,
             status,
+            isExpired,
             url: `https://ramia.us/questions/${formId}/`,
           });
         }
@@ -119,6 +128,7 @@ export async function GET() {
           id: formId,
           title: "Unknown Form",
           status: 'active',
+          isExpired: false,
           url: `https://ramia.us/questions/${formId}/`,
         });
       }

@@ -11,7 +11,10 @@ interface FormInfo {
   title: string;
   description?: string;
   created_at?: string;
+  updated_at?: string;
+  expires_at?: string;
   status: 'active' | 'disabled';
+  isExpired: boolean;
   url: string;
 }
 
@@ -130,7 +133,10 @@ export default function AdminDashboard() {
             } else {
               delete newState[formId];
               // Refresh forms list when countdown reaches 0
-              fetchForms();
+              // Use setTimeout to ensure this runs after the state update
+              setTimeout(() => {
+                fetchForms();
+              }, 0);
             }
             return newState;
           });
@@ -184,6 +190,28 @@ export default function AdminDashboard() {
     });
   };
 
+  const getTimeRemaining = (expiresAt?: string, isExpired?: boolean) => {
+    if (!expiresAt) return "No expiration";
+    
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const diffMs = expiration.getTime() - now.getTime();
+    
+    if (diffMs <= 0 || isExpired) return "Expired";
+    
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (diffDays > 0) {
+      return `Expires in ${diffDays}d ${diffHours}h`;
+    } else if (diffHours > 0) {
+      return `Expires in ${diffHours}h ${diffMinutes}m`;
+    } else {
+      return `Expires in ${diffMinutes}m`;
+    }
+  };
+
   const filteredForms = forms.filter(form =>
     form.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     form.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -221,8 +249,8 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">Manage your feedback forms</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">Manage forms</p>
           </div>
           <div className="flex gap-3">
             <DarkModeToggle />
@@ -297,18 +325,14 @@ export default function AdminDashboard() {
           <div className="grid gap-6">
             {filteredForms.map((form) => (
               <Card key={form.id} className="shadow-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        {form.title}
-                      </CardTitle>
-                      {form.description && (
-                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">{form.description}</p>
-                      )}
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-                        <span>ID: {form.id}</span>
-                        <span>Created: {formatDate(form.created_at)}</span>
+                <CardContent>
+                  <div className="flex gap-6">
+                    {/* Left side - Form info and primary actions */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {form.title}
+                        </CardTitle>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           form.status === 'active' 
                             ? 'bg-green-100 text-green-800' 
@@ -317,221 +341,238 @@ export default function AdminDashboard() {
                           {form.status}
                         </span>
                       </div>
+                      {form.description && (
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
+                          {form.description}
+                        </p>
+                      )}
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        ID: {form.id} • {form.updated_at && form.updated_at !== form.created_at ? 'Updated' : 'Created'}: {formatDate(form.updated_at && form.updated_at !== form.created_at ? form.updated_at : form.created_at)} • {getTimeRemaining(form.expires_at, form.isExpired)}
+                      </div>
+                      
+                      {/* Primary actions - horizontal row */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => window.open(form.url, '_blank')}
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Open
+                        </Button>
+                        
+                        <Button
+                          onClick={() => copyToClipboard(form.url)}
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copy Link
+                        </Button>
+                        
+                        <Button
+                          onClick={async () => {
+                            if (!qrCodeData[form.id]) {
+                              await generateQRCode(form.url, form.id);
+                            }
+                            setCurrentQRForm(form.id);
+                            setShowQRModal(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
+                          </svg>
+                          QR Code
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={() => window.open(form.url, '_blank')}
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      Open
-                    </Button>
-                    
-                    <Button
-                      onClick={() => copyToClipboard(form.url)}
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy Link
-                    </Button>
-                    
-                    <Button
-                      onClick={async () => {
-                        if (!qrCodeData[form.id]) {
-                          await generateQRCode(form.url, form.id);
-                        }
-                        setCurrentQRForm(form.id);
-                        setShowQRModal(true);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zM5 20h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
-                      </svg>
-                      QR Code
-                    </Button>
-                    
-                    <Button
-                      onClick={async () => {
-                        try {
-                          // Fetch the form config to get the data
-                          const response = await fetch(`/api/forms/${form.id}`);
-                          if (response.ok) {
-                            const htmlContent = await response.text();
-                            
-                            // Extract the config from the HTML (it's injected as a script)
-                            const configMatch = htmlContent.match(/let config = ({.*?});/);
-                            if (configMatch) {
-                              const config = JSON.parse(configMatch[1]);
-                              
-                              // Navigate to admin page with the form data for editing
-                              const formData = encodeURIComponent(JSON.stringify({
-                                formId: form.id, // Include the original form ID for editing
-                                title: config.title,
-                                description: config.description || '',
-                                questions: config.questions,
-                                enforceUnique: config.enforceUnique,
-                                expires_at: config.expires_at, // Keep original expiration
-                              }));
-                              
-                              window.open(`/create?edit=${formData}`, '_blank');
-                            } else {
-                              alert('Could not extract form data');
+
+                    {/* Right side - Management actions */}
+                    <div className="flex flex-col gap-2 min-w-fit self-center">
+                      {/* First row - Edit and Duplicate */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            try {
+                              // Fetch the form config to get the data
+                              const response = await fetch(`/api/forms/${form.id}`);
+                              if (response.ok) {
+                                const htmlContent = await response.text();
+                                
+                                // Extract the config from the HTML (it's injected as a script)
+                                const configMatch = htmlContent.match(/let config = ({.*?});/);
+                                if (configMatch) {
+                                  const config = JSON.parse(configMatch[1]);
+                                  
+                                  // Navigate to admin page with the form data for editing
+                                  const formData = encodeURIComponent(JSON.stringify({
+                                    formId: form.id, // Include the original form ID for editing
+                                    title: config.title,
+                                    description: config.description || '',
+                                    questions: config.questions,
+                                    enforceUnique: config.enforceUnique,
+                                    expires_at: config.expires_at, // Keep original expiration
+                                  }));
+                                  
+                                  window.open(`/create?edit=${formData}`, '_blank');
+                                } else {
+                                  alert('Could not extract form data');
+                                }
+                              } else {
+                                alert('Failed to load form data');
+                              }
+                            } catch (err) {
+                              alert('Error loading form data');
                             }
-                          } else {
-                            alert('Failed to load form data');
-                          }
-                        } catch (err) {
-                          alert('Error loading form data');
-                        }
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </Button>
-                    
-                    <Button
-                      onClick={async () => {
-                        try {
-                          // Fetch the form config to get the data
-                          const response = await fetch(`/api/forms/${form.id}`);
-                          if (response.ok) {
-                            const htmlContent = await response.text();
-                            
-                            // Extract the config from the HTML (it's injected as a script)
-                            const configMatch = htmlContent.match(/let config = ({.*?});/);
-                            if (configMatch) {
-                              const config = JSON.parse(configMatch[1]);
-                              
-                              // Navigate to admin page with the form data
-                              const formData = encodeURIComponent(JSON.stringify({
-                                title: `${config.title} (Copy)`,
-                                description: config.description || '',
-                                questions: config.questions,
-                                enforceUnique: config.enforceUnique,
-                                // Don't include expiration - let user set it fresh
-                              }));
-                              
-                              window.open(`/create?duplicate=${formData}`, '_blank');
-                            } else {
-                              alert('Could not extract form data');
-                            }
-                          } else {
-                            alert('Failed to load form data');
-                          }
-                        } catch (err) {
-                          alert('Error loading form data');
-                        }
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Duplicate
-                    </Button>
-                    
-                    <Button
-                      onClick={async () => {
-                        const action = form.status === 'active' ? 'disable' : 'enable';
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </Button>
                         
-                        // Start updating state with 60 second countdown
-                        setUpdatingForms(prev => ({ ...prev, [form.id]: 60 }));
-                        
-                        try {
-                          const response = await fetch(`/api/forms/${form.id}/toggle`, {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ action }),
-                          });
-                          if (response.ok) {
-                            // Countdown will handle the refresh when it reaches 0
-                          } else {
-                            alert(`Failed to ${action} form`);
-                            // Remove from updating state on error
-                            setUpdatingForms(prev => {
-                              const newState = { ...prev };
-                              delete newState[form.id];
-                              return newState;
-                            });
-                          }
-                        } catch (err) {
-                          alert(`Error ${action}ing form`);
-                          // Remove from updating state on error
-                          setUpdatingForms(prev => {
-                            const newState = { ...prev };
-                            delete newState[form.id];
-                            return newState;
-                          });
-                        }
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className={`cursor-pointer ${
-                        updatingForms[form.id] !== undefined 
-                          ? 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200' 
-                          : ''
-                      }`}
-                      disabled={updatingForms[form.id] !== undefined}
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
-                      </svg>
-                      {updatingForms[form.id] !== undefined 
-                        ? `Updating (${updatingForms[form.id]}s)` 
-                        : (form.status === 'active' ? 'Disable' : 'Enable')
-                      }
-                    </Button>
-                    
-                    <Button
-                      onClick={async () => {
-                        if (confirm(`Are you sure you want to delete "${form.title}"? This action cannot be undone.`)) {
-                          try {
-                            const response = await fetch(`/api/forms/${form.id}`, {
-                              method: 'DELETE',
-                            });
-                            if (response.ok) {
-                              // Refresh the forms list
-                              fetchForms();
-                            } else {
-                              alert('Failed to delete form');
+                        <Button
+                          onClick={async () => {
+                            try {
+                              // Fetch the form config to get the data
+                              const response = await fetch(`/api/forms/${form.id}`);
+                              if (response.ok) {
+                                const htmlContent = await response.text();
+                                
+                                // Extract the config from the HTML (it's injected as a script)
+                                const configMatch = htmlContent.match(/let config = ({.*?});/);
+                                if (configMatch) {
+                                  const config = JSON.parse(configMatch[1]);
+                                  
+                                  // Navigate to admin page with the form data
+                                  const formData = encodeURIComponent(JSON.stringify({
+                                    title: `${config.title} (Copy)`,
+                                    description: config.description || '',
+                                    questions: config.questions,
+                                    enforceUnique: config.enforceUnique,
+                                    // Don't include expiration - let user set it fresh
+                                  }));
+                                  
+                                  window.open(`/create?duplicate=${formData}`, '_blank');
+                                } else {
+                                  alert('Could not extract form data');
+                                }
+                              } else {
+                                alert('Failed to load form data');
+                              }
+                            } catch (err) {
+                              alert('Error loading form data');
                             }
-                          } catch (err) {
-                            alert('Error deleting form');
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Duplicate
+                        </Button>
+                      </div>
+
+                      {/* Second row - Disable and Delete */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={async () => {
+                            const action = form.status === 'active' ? 'disable' : 'enable';
+                            
+                            // Start updating state with 60 second countdown
+                            setUpdatingForms(prev => ({ ...prev, [form.id]: 60 }));
+                            
+                            try {
+                              const response = await fetch(`/api/forms/${form.id}/toggle`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ action }),
+                              });
+                              if (response.ok) {
+                                // Countdown will handle the refresh when it reaches 0
+                              } else {
+                                alert(`Failed to ${action} form`);
+                                // Remove from updating state on error
+                                setUpdatingForms(prev => {
+                                  const newState = { ...prev };
+                                  delete newState[form.id];
+                                  return newState;
+                                });
+                              }
+                            } catch (err) {
+                              alert(`Error ${action}ing form`);
+                              // Remove from updating state on error
+                              setUpdatingForms(prev => {
+                                const newState = { ...prev };
+                                delete newState[form.id];
+                                return newState;
+                              });
+                            }
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className={`cursor-pointer ${
+                            updatingForms[form.id] !== undefined 
+                              ? 'bg-yellow-100 border-yellow-300 text-amber-600 dark:text-amber-300 hover:bg-yellow-200' 
+                              : ''
+                          }`}
+                          disabled={updatingForms[form.id] !== undefined}
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                          </svg>
+                          {updatingForms[form.id] !== undefined 
+                            ? `Updating (${updatingForms[form.id]}s)` 
+                            : (form.status === 'active' ? 'Disable' : 'Enable')
                           }
-                        }
-                      }}
-                      variant="destructive"
-                      size="sm"
-                      className="cursor-pointer"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
-                    </Button>
+                        </Button>
+                        
+                        <Button
+                          onClick={async () => {
+                            if (confirm(`Are you sure you want to delete "${form.title}"? This action cannot be undone.`)) {
+                              try {
+                                const response = await fetch(`/api/forms/${form.id}`, {
+                                  method: 'DELETE',
+                                });
+                                if (response.ok) {
+                                  // Refresh the forms list
+                                  fetchForms();
+                                } else {
+                                  alert('Failed to delete form');
+                                }
+                              } catch (err) {
+                                alert('Error deleting form');
+                              }
+                            }
+                          }}
+                          variant="destructive"
+                          size="sm"
+                          className="cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
