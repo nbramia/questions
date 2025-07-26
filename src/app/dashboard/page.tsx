@@ -27,10 +27,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("created"); // "created", "updated", "responses"
   const [updatingForms, setUpdatingForms] = useState<{[key: string]: number}>({}); // Track countdown for each form
   const [qrCodeData, setQRCodeData] = useState<{[key: string]: string}>({}); // Track QR codes for each form
   const [showQRModal, setShowQRModal] = useState(false);
   const [currentQRForm, setCurrentQRForm] = useState<string | null>(null);
+  const [showActiveOnly, setShowActiveOnly] = useState(true);
+  const [showWithResponsesOnly, setShowWithResponsesOnly] = useState(false);
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
@@ -268,10 +271,33 @@ export default function AdminDashboard() {
     return info;
   };
 
-  const filteredForms = forms.filter(form =>
-    form.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    form.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter and sort forms
+  const filteredAndSortedForms = forms
+    .filter(form => {
+      // Search filter
+      const matchesSearch = form.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (form.description && form.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Active forms filter
+      const matchesActiveFilter = !showActiveOnly || form.status === 'active';
+      
+      // Forms with responses filter
+      const matchesResponseFilter = !showWithResponsesOnly || (form.totalResponses && form.totalResponses > 0);
+      
+      return matchesSearch && matchesActiveFilter && matchesResponseFilter;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "created":
+          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+        case "updated":
+          return new Date(b.updated_at || b.created_at || '').getTime() - new Date(a.updated_at || a.created_at || '').getTime();
+        case "responses":
+          return (b.totalResponses || 0) - (a.totalResponses || 0);
+        default:
+          return 0;
+      }
+    });
 
   if (!authenticated) {
     return (
@@ -305,8 +331,10 @@ export default function AdminDashboard() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">Manage forms</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Manage forms ({filteredAndSortedForms.length} of {forms.length} forms shown)
+            </p>
           </div>
           <div className="flex gap-3">
             <DarkModeToggle />
@@ -331,19 +359,64 @@ export default function AdminDashboard() {
 
         {/* Search and Stats */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8 mb-8">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
-            <div>
-              <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search Forms</Label>
-              <Input
-                type="text"
-                placeholder="Search by title or ID..."
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full sm:w-80 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {filteredForms.length} of {forms.length} forms
+          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between mb-6">
+            <div className="grid grid-cols-3 gap-6 w-full">
+              <div>
+                <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search Forms</Label>
+                <Input
+                  type="text"
+                  placeholder="Search by title or description..."
+                  value={searchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                  className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              <div>
+                <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</Label>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm appearance-none bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="created">Most Recently Created</option>
+                    <option value="updated">Most Recently Updated</option>
+                    <option value="responses">Most Recent Response</option>
+                  </select>
+                  <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-300 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filters</Label>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="active-only"
+                      checked={showActiveOnly}
+                      onChange={(e) => setShowActiveOnly(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <label htmlFor="active-only" className="text-sm text-gray-700 dark:text-gray-300">
+                      Active forms only
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="with-responses"
+                      checked={showWithResponsesOnly}
+                      onChange={(e) => setShowWithResponsesOnly(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <label htmlFor="with-responses" className="text-sm text-gray-700 dark:text-gray-300">
+                      Forms with responses
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -368,95 +441,132 @@ export default function AdminDashboard() {
               </Button>
             </div>
           </div>
-        ) : filteredForms.length === 0 ? (
+        ) : filteredAndSortedForms.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <div className="text-center text-gray-600 dark:text-gray-300">
               <p className="font-medium">No forms found</p>
               <p className="text-sm mt-1">
-                {searchTerm ? "Try adjusting your search terms" : "Create your first form to get started"}
+                {searchTerm ? "Try adjusting your search terms" : "Try adjusting your filters"}
               </p>
             </div>
           </div>
         ) : (
           <div className="grid gap-6">
-            {filteredForms.map((form) => (
+            {filteredAndSortedForms.map((form: FormInfo) => (
               <Card key={form.id} className="shadow-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
                 <CardContent>
-                  <div className="flex gap-6">
-                    {/* Left side - Form info and primary actions */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {form.title}
-                        </CardTitle>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          form.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {form.status}
-                        </span>
-                      </div>
-                      {form.description && (
-                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
-                          {form.description}
-                        </p>
-                      )}
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        ID: {form.id} • {form.updated_at && form.updated_at !== form.created_at ? 'Updated' : 'Created'}: {formatDate(form.updated_at && form.updated_at !== form.created_at ? form.updated_at : form.created_at)}{getExpirationInfo(form.expires_at, form.status) && ` • ${getExpirationInfo(form.expires_at, form.status)}`}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        {getResponseInfo(form.totalResponses, form.lastResponseAt)}
-                      </div>
-                      
-                      {/* Primary actions - horizontal row */}
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => window.open(form.url, '_blank')}
-                          variant="outline"
-                          size="sm"
-                          className="cursor-pointer"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          Open
-                        </Button>
+                  <div className="grid grid-cols-4 gap-6">
+                    {/* Left column - 50% width (2/4) */}
+                    <div className="col-span-2">
+                      <div className="flex flex-col justify-center h-full">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {form.title}
+                          </CardTitle>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            form.status === 'active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {form.status}
+                          </span>
+                        </div>
+                        {form.description && (
+                          <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
+                            {form.description}
+                          </p>
+                        )}
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          {form.updated_at && form.updated_at !== form.created_at ? 'Updated' : 'Created'}: {formatDate(form.updated_at && form.updated_at !== form.created_at ? form.updated_at : form.created_at)}{getExpirationInfo(form.expires_at, form.status) && ` • ${getExpirationInfo(form.expires_at, form.status)}`}
+                        </div>
                         
-                        <Button
-                          onClick={() => copyToClipboard(form.url)}
-                          variant="outline"
-                          size="sm"
-                          className="cursor-pointer"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          Copy Link
-                        </Button>
-                        
-                        <Button
-                          onClick={async () => {
-                            if (!qrCodeData[form.id]) {
-                              await generateQRCode(form.url, form.id);
-                            }
-                            setCurrentQRForm(form.id);
-                            setShowQRModal(true);
-                          }}
-                          variant="outline"
-                          size="sm"
-                          className="cursor-pointer"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
-                          </svg>
-                          QR Code
-                        </Button>
+                        {/* Primary actions - horizontal row */}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => window.open(form.url, '_blank')}
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Open
+                          </Button>
+                          
+                          <Button
+                            onClick={() => copyToClipboard(form.url)}
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy Link
+                          </Button>
+                          
+                          <Button
+                            onClick={async () => {
+                              if (!qrCodeData[form.id]) {
+                                await generateQRCode(form.url, form.id);
+                              }
+                              setCurrentQRForm(form.id);
+                              setShowQRModal(true);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="cursor-pointer"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 001 1zm12 0h2a1 1 0 001-1v-1a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
+                            </svg>
+                            QR Code
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Right side - Management actions */}
-                    <div className="flex flex-col gap-2 min-w-fit self-center">
+                    {/* Middle column - 25% width (1/4) - Response data */}
+                    <div className="col-span-1">
+                      <div className="text-center flex flex-col justify-center h-full">
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                          {form.totalResponses || 0}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                          {form.totalResponses === 1 ? 'response' : 'responses'}
+                        </div>
+                        {form.lastResponseAt ? (
+                          <>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                              {(() => {
+                                const lastResponse = new Date(form.lastResponseAt);
+                                const now = new Date();
+                                const diffMs = now.getTime() - lastResponse.getTime();
+                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                
+                                if (diffDays > 0) {
+                                  return `${diffDays}d`;
+                                } else if (diffHours > 0) {
+                                  return `${diffHours}h`;
+                                } else {
+                                  return `${diffMinutes}m`;
+                                }
+                              })()}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              since last response
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Right column - 25% width (1/4) - Management actions */}
+                    <div className="col-span-1">
+                      <div className="flex flex-col gap-2 justify-center h-full">
                       {/* First row - Edit and Duplicate */}
                       <div className="flex gap-2">
                         <Button
@@ -632,6 +742,7 @@ export default function AdminDashboard() {
                         </Button>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </CardContent>
               </Card>
