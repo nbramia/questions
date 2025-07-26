@@ -1,0 +1,59 @@
+{
+  "id": "OVEBaj",
+  "title": "conditionals",
+  "description": "pick right",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "id": "q1753499988321",
+      "type": "scale",
+      "label": "lkmlkm",
+      "options": [],
+      "scaleRange": 10
+    },
+    {
+      "id": "q1753499990630",
+      "type": "text",
+      "label": "kjn",
+      "options": [],
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1753499988321",
+        "condition": "greater_than",
+        "value": "8"
+      }
+    },
+    {
+      "id": "q1",
+      "type": "scale",
+      "label": "lkmlkm",
+      "options": [],
+      "scaleRange": 5,
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1753499990630",
+        "condition": "contains",
+        "value": "yes"
+      }
+    },
+    {
+      "id": "q1753501510352",
+      "type": "likert",
+      "label": "ami",
+      "options": [
+        "Strongly agree",
+        "Somewhat agree",
+        "Neither agree nor disagree",
+        "Somewhat disagree",
+        "Strongly disagree"
+      ],
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1",
+        "condition": "greater_than",
+        "value": "4"
+      }
+    }
+  ],
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycbw-Z6SioFKc3QSrSoQBNr817ZpQOE-ZavsFZYPs3ypmccX9-o5PaeuYHndLo9jpd0RefA/exec"
+}
