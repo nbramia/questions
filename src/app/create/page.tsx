@@ -44,6 +44,15 @@ interface Question {
   };
 }
 
+interface FormData {
+  formId?: string;
+  title: string;
+  description?: string;
+  questions: Question[];
+  enforceUnique?: boolean;
+  expires_at?: string;
+}
+
 interface SortableQuestionProps {
   question: Question;
   index: number;
@@ -456,7 +465,6 @@ export default function AdminCreatePage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrCodeData, setQRCodeData] = useState("");
   const [editingFormId, setEditingFormId] = useState<string | null>(null); // Track if we're editing
-  const [darkMode, setDarkMode] = useState(false); // Track dark mode for form publishing
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
   const { isDark } = useDarkMode();
@@ -513,7 +521,7 @@ export default function AdminCreatePage() {
   );
 
   useEffect(() => {
-    if (result) {
+    if (result && countdown > 0) {
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 0) {
@@ -525,7 +533,16 @@ export default function AdminCreatePage() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [result]);
+  }, [result, countdown]);
+
+  // Reset countdown when editing starts
+  useEffect(() => {
+    if (editingFormId) {
+      setCountdown(0);
+      setResult("");
+      setQRCodeData("");
+    }
+  }, [editingFormId]);
 
   // Handle duplicate URL parameter
   useEffect(() => {
@@ -536,7 +553,7 @@ export default function AdminCreatePage() {
       
       if (duplicateData) {
         try {
-          const formData = JSON.parse(decodeURIComponent(duplicateData));
+          const formData: FormData = JSON.parse(decodeURIComponent(duplicateData));
           
           // Pre-populate the form with the duplicated data
           setTitle(formData.title || "");
@@ -562,10 +579,10 @@ export default function AdminCreatePage() {
         }
       } else if (editData) {
         try {
-          const formData = JSON.parse(decodeURIComponent(editData));
+          const formData: FormData = JSON.parse(decodeURIComponent(editData));
           
           // Set editing mode
-          setEditingFormId(formData.formId);
+          setEditingFormId(formData.formId ? formData.formId : null);
           
           // Pre-populate the form with the existing data
           setTitle(formData.title || "");
@@ -601,7 +618,7 @@ export default function AdminCreatePage() {
           if (formData.questions && Array.isArray(formData.questions)) {
             console.log('Loading questions for edit:', formData.questions);
             // Ensure all questions have the required properties
-            const normalizedQuestions = formData.questions.map((q: any) => ({
+            const normalizedQuestions = formData.questions.map((q: Question) => ({
               id: q.id || `q${Date.now()}`,
               type: q.type || "text",
               label: q.label || "",
@@ -1086,8 +1103,8 @@ export default function AdminCreatePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-400">Form Created Successfully!</h3>
-                  <p className="text-green-700 dark:text-green-400 mt-1">Your form has been deployed; it may take a moment for it to become available.</p>
+                  <h3 className="text-lg font-semibold text-green-800 dark:text-green-400">Form Published Successfully!</h3>
+                  <p className="text-green-700 dark:text-green-400 mt-1">Your form has been published; it may take a moment for it to become available.</p>
                 </div>
               </div>
               
