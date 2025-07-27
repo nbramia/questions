@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { getUpcomingEvents, formatCalendarForPrompt } from '@/lib/20q/calendar';
 import { buildCalendarPrompt } from '@/lib/20q/prompts';
 import { sendTelegramMessage } from '@/lib/20q/telegram';
+import { determineAccountContext } from '@/lib/storage/drive';
 
 interface NudgeRequest {
   goal: string;
   sessionId?: string;
   customMessage?: string;
+  sessionData?: any; // Full session data for context analysis
 }
 
 interface NudgeDecision {
@@ -14,12 +16,13 @@ interface NudgeDecision {
   reason: string;
   timing: string;
   message: string;
+  accountContext?: 'personal' | 'work';
 }
 
 export async function POST(req: Request) {
   try {
     const body: NudgeRequest = await req.json();
-    const { goal, sessionId, customMessage } = body;
+    const { goal, sessionId, customMessage, sessionData } = body;
 
     if (!goal) {
       return NextResponse.json(
@@ -28,11 +31,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get upcoming calendar events
-    const events = await getUpcomingEvents(3); // Next 3 days
-    const calendarText = formatCalendarForPrompt(events);
+    // Get upcoming calendar events from BOTH accounts overlaid
+    // This gives the AI the full picture for optimal timing decisions
+    const allEvents = await getUpcomingEvents(3); // This gets both personal and work events
+    const calendarText = formatCalendarForPrompt(allEvents);
 
-    // Build prompt for LLM decision
+    // Determine which account context the session belongs to for storage/notification purposes
+    let accountContext: 'personal' | 'work' = 'personal';
+    if (sessionData) {
+      accountContext = determineAccountContext(sessionData);
+    }
+
+    // Build prompt for LLM decision with full calendar view
     const prompt = buildCalendarPrompt(goal, calendarText);
 
     // Call OpenAI to decide if we should nudge
@@ -47,7 +57,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: 'system',
-            content: 'You are an AI assistant that analyzes calendar events to determine if and when to send helpful nudges about 20 Questions goals. Always respond with valid JSON.'
+            content: 'You are an AI assistant that analyzes calendar events from both personal and work calendars to determine if and when to send helpful nudges about 20 Questions goals. You can see the full schedule across both contexts to find optimal timing. Always respond with valid JSON.'
           },
           {
             role: 'user',
@@ -97,10 +107,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // Add account context to decision
+    decision.accountContext = accountContext;
+
     // If AI says we should nudge, send the notification
     if (decision.shouldNudge) {
+      const contextPrefix = accountContext === 'work' ? '[Work] ' : '[Personal] ';
       const message = customMessage || decision.message || 
-        `🤔 20 Questions Reminder\n\nGoal: ${goal}\n\nReady to continue? https://ramia.us/20q`;
+        `${contextPrefix}🤔 20 Questions Reminder\n\nGoal: ${goal}\n\nReady to continue? https://ramia.us/20q`;
 
       const success = await sendTelegramMessage(message);
 
@@ -115,7 +129,9 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       decision,
-      events: events.length
+      events: allEvents.length,
+      accountContext,
+      calendarContext: 'both' // Indicate that both calendars were analyzed
     });
 
   } catch (error) {

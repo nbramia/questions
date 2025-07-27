@@ -309,40 +309,87 @@ GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/AKfycbw.../exec
 NEXT_PUBLIC_ADMIN_PASSWORD=your_secure_password
 ```
 
-#### **20 Questions AI Experience**
+#### **20 Questions AI Experience (Multi-Account)**
 ```env
 # OpenAI API
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
-# Google Service Account (for Drive & Calendar)
-GOOGLE_SERVICE_ACCOUNT_EMAIL=your_service_account@project.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_DRIVE_FOLDER_ID=your_drive_folder_id
-GOOGLE_CALENDAR_ID=your_calendar_id_or_primary
+# Personal Google Account
+GOOGLE_SERVICE_ACCOUNT_EMAIL_PERSONAL=20q-service-account@personal-20q-project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY_PERSONAL="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_FOLDER_ID_PERSONAL=your_personal_folder_id
+GOOGLE_CALENDAR_ID_PERSONAL=your_personal_email@gmail.com
+
+# Work Google Account
+GOOGLE_SERVICE_ACCOUNT_EMAIL_WORK=20q-service-account@work-20q-project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY_WORK="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_FOLDER_ID_WORK=your_work_folder_id
+GOOGLE_CALENDAR_ID_WORK=your_work_email@company.com
 
 # Telegram Bot
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 ```
 
-### GitHub Setup
-1. Create a GitHub Personal Access Token with `repo` permissions
-2. Create a repository (e.g., `username/questions`)
-3. Enable GitHub Pages in repository settings
-4. Update `GITHUB_REPO` in API routes to your repository
+### **Multi-Account Setup (Personal + Work)**
 
-### Google Services Setup
+The 20Q system now supports **automatic account selection** based on session context. The AI will automatically choose between your personal and work accounts based on the content of your conversations.
 
-#### **Google Sheets (Existing Forms)**
-1. Create a new Google Spreadsheet
-2. Note the spreadsheet ID from the URL
-3. Open Google Apps Script (script.google.com)
-4. Create new project and paste contents of `google-apps-script-jsonp.js`
-5. Replace `spreadsheetId` in the script (line 29) with your spreadsheet ID
-6. Deploy as web app with "Anyone" access
-7. Copy deployment URL to `GOOGLE_SCRIPT_URL`
+#### **Environment Variables for Multi-Account**
 
-#### **Google Drive & Calendar (20Q)**
+Create `.env.local` with both account configurations:
+
+```env
+# OpenAI API
+OPENAI_API_KEY=sk-your-openai-api-key
+
+# Personal Google Account
+GOOGLE_SERVICE_ACCOUNT_EMAIL_PERSONAL=20q-service-account@personal-20q-project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY_PERSONAL="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_FOLDER_ID_PERSONAL=your_personal_drive_folder_id
+GOOGLE_CALENDAR_ID_PERSONAL=your_personal_email@gmail.com
+
+# Work Google Account  
+GOOGLE_SERVICE_ACCOUNT_EMAIL_WORK=20q-service-account@work-20q-project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY_WORK="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_FOLDER_ID_WORK=your_work_drive_folder_id
+GOOGLE_CALENDAR_ID_WORK=your_work_email@company.com
+
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+#### **How Multi-Account Selection Works**
+
+The AI automatically determines which account to use based on session content:
+
+**Work Context Keywords:**
+- work, job, career, office, meeting, project, team, colleague
+- boss, manager, client, business, company, professional
+- deadline, presentation, report, strategy, management
+
+**Personal Context Keywords:**
+- personal, family, home, life, relationship, health, fitness
+- hobby, travel, vacation, friend, partner, child, parent
+- wellness, lifestyle, self-improvement, happiness
+
+**Examples:**
+- "I need to improve my presentation skills" → **Work account**
+- "I want to plan a family vacation" → **Personal account**
+- "I'm struggling with work-life balance" → **Personal account** (default for ambiguous cases)
+
+#### **Multi-Account Features**
+
+1. **Automatic Context Detection**: AI analyzes your goal and answers to choose the right account
+2. **Separate Storage**: Sessions are saved to the appropriate Google Drive folder
+3. **Context-Aware Notifications**: Calendar analysis uses the relevant calendar
+4. **Clear Labeling**: Notifications are prefixed with [Personal] or [Work]
+5. **Session Recovery**: System searches both accounts when retrieving sessions
+6. **Overlaid Calendar Analysis**: For scheduling nudges, AI sees BOTH personal and work calendars overlaid to find optimal timing across your full schedule
+
+### **Google Services Setup**
+
 1. **Create Google Cloud Project**
 2. **Enable APIs:**
    - Google Drive API

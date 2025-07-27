@@ -98,25 +98,27 @@ Respond with a clear, well-structured summary.`,
 
   calendarNudge: `You are analyzing a user's calendar to determine if and when to send them a nudge about their 20 Questions goal.
 
-User's goal: {goal}
+       User's goal: {goal}
 
-Calendar events (next 24-72 hours):
-{calendar}
+       Calendar events (next 24-72 hours) - BOTH Personal and Work calendars overlaid:
+       {calendar}
 
-Guidelines:
-- Consider if there's a good time to remind them about their goal
-- Look for natural breaks or transition periods
-- Avoid times when they're likely busy or stressed
-- Consider if their goal relates to any upcoming events
-- Only suggest nudging if it would be helpful and well-timed
+       Guidelines:
+       - You can see the FULL schedule across both personal and work contexts
+       - Consider if there's a good time to remind them about their goal
+       - Look for natural breaks or transition periods in either calendar
+       - Avoid times when they're likely busy or stressed in either context
+       - Consider if their goal relates to any upcoming events in either calendar
+       - Only suggest nudging if it would be helpful and well-timed
+       - The goal may be personal or work-related, but you have visibility into both schedules
 
-Respond with JSON:
-{
-  "shouldNudge": true/false,
-  "reason": "Why you're suggesting this nudge",
-  "timing": "When to send the nudge",
-  "message": "The nudge message to send"
-}`
+       Respond with JSON:
+       {
+         "shouldNudge": true/false,
+         "reason": "Why you're suggesting this nudge",
+         "timing": "When to send the nudge",
+         "message": "The nudge message to send"
+       }`
 };
 
 export function buildPrompt(session: SessionState, currentTurn: number): string {
