@@ -33,11 +33,18 @@ function getDriveClient(accountConfig: GoogleAccountConfig) {
   return google.drive({ version: 'v3', auth });
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const accounts: ('personal' | 'work')[] = ['personal', 'work'];
-    const results: any[] = [];
-    
+    const results: Array<{
+      account: 'personal' | 'work';
+      files: Array<{
+        name: string;
+        id: string;
+        created: string;
+      }>;
+    }> = [];
+
     for (const accountContext of accounts) {
       try {
         const accountConfig = getAccountConfig(accountContext);
@@ -50,7 +57,6 @@ export async function GET(req: Request) {
           calendarId: accountConfig.calendarId ? 'Set' : 'Not set'
         });
 
-        // List all files in the folder
         const response = await drive.files.list({
           q: `'${accountConfig.driveFolderId}' in parents`,
           fields: 'files(id, name, createdTime)',
@@ -58,31 +64,24 @@ export async function GET(req: Request) {
 
         const files = response.data.files || [];
         console.log(`Found ${files.length} files in ${accountContext} account`);
-        
+
         results.push({
           account: accountContext,
           files: files.map(f => ({
-            name: f.name,
-            id: f.id,
-            created: f.createdTime
+            name: f.name || '',
+            id: f.id || '',
+            created: f.createdTime || ''
           }))
         });
-
       } catch (error) {
         console.error(`Error checking ${accountContext} account:`, error);
         results.push({
           account: accountContext,
-          error: error instanceof Error ? error.message : 'Unknown error',
           files: []
         });
       }
     }
-
-    return NextResponse.json({
-      success: true,
-      results
-    });
-
+    return NextResponse.json({ success: true, results });
   } catch (error) {
     console.error('Error in debug-sessions:', error);
     return NextResponse.json(

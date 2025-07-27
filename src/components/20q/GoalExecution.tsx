@@ -125,7 +125,7 @@ I'm ready to help you execute this goal. What would you like to start with?`,
         <CardContent>
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium text-gray-900 mb-2">AI's Understanding</h3>
+              <h3 className="font-medium text-gray-900 mb-2">AI&apos;s Understanding</h3>
               <p className="text-gray-700 bg-blue-50 p-3 rounded-lg">
                 {session.goal}
               </p>

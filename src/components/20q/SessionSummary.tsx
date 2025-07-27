@@ -45,7 +45,7 @@ export function SessionSummary({ session }: SessionSummaryProps) {
             Goal Understanding Complete
           </h1>
           <p className="text-gray-600">
-            We've successfully captured your goal. You can now proceed to the execution phase.
+            We&apos;ve successfully captured your goal. You can now proceed to the execution phase.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export function SessionSummary({ session }: SessionSummaryProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">AI's Understanding of Your Goal</h3>
+                <h3 className="font-medium text-gray-900 mb-2">AI&apos;s Understanding of Your Goal</h3>
                 <p className="text-gray-700 bg-green-50 p-3 rounded-lg border border-green-200">
                   {session.goal || 'No goal defined'}
                 </p>
@@ -72,20 +72,22 @@ export function SessionSummary({ session }: SessionSummaryProps) {
                 </div>
               )}
               
-              <div>
-                <h3 className="font-medium text-gray-900 mb-2">Confidence Level</h3>
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(averageConfidence || 0) * 100}%` }}
-                    />
+              {averageConfidence > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">Confidence Score</h3>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${(averageConfidence * 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {Math.round(averageConfidence * 100)}%
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-600">
-                    {Math.round((averageConfidence || 0) * 100)}%
-                  </span>
                 </div>
-              </div>
+              )}
 
               <div className="pt-4">
                 <Button 
