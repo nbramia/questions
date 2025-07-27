@@ -196,6 +196,13 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
               }
               className="w-full !bg-white !border-gray-300 !text-gray-900"
             />
+            {q.label.length >= 190 && (
+              <div className={`text-sm mt-1 ${
+                q.label.length > 200 ? 'text-red-500' : 'text-gray-500'
+              }`}>
+                {q.label.length}/200
+              </div>
+            )}
           </div>
           
           <div>
@@ -229,16 +236,25 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
               <div className="space-y-3">
                 {q.options.map((option, optionIndex) => (
                   <div key={optionIndex} className="flex items-center gap-3">
-                    <Input
-                      value={option}
-                      placeholder={`Option ${optionIndex + 1}`}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const newOptions = [...q.options];
-                        newOptions[optionIndex] = e.target.value;
-                        handleQuestionChange(i, "options", newOptions);
-                      }}
-                      className="flex-1 !bg-white !border-gray-300 !text-gray-900"
-                    />
+                    <div className="flex-1">
+                      <Input
+                        value={option}
+                        placeholder={`Option ${optionIndex + 1}`}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const newOptions = [...q.options];
+                          newOptions[optionIndex] = e.target.value;
+                          handleQuestionChange(i, "options", newOptions);
+                        }}
+                        className="w-full !bg-white !border-gray-300 !text-gray-900"
+                      />
+                      {option.length >= 90 && (
+                        <div className={`text-sm mt-1 ${
+                          option.length > 100 ? 'text-red-500' : 'text-gray-500'
+                        }`}>
+                          {option.length}/100
+                        </div>
+                      )}
+                    </div>
                     <Button
                       type="button"
                       variant="destructive"
@@ -304,16 +320,25 @@ function SortableQuestion({ question: q, index: i, questions, handleQuestionChan
               <div className="space-y-3">
                 {q.options.map((option, optionIndex) => (
                   <div key={optionIndex} className="flex items-center gap-3">
-                    <Input
-                      value={option}
-                      placeholder={`Option ${optionIndex + 1}`}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const newOptions = [...q.options];
-                        newOptions[optionIndex] = e.target.value;
-                        handleQuestionChange(i, "options", newOptions);
-                      }}
-                      className="flex-1 !bg-white !border-gray-300 !text-gray-900"
-                    />
+                    <div className="flex-1">
+                      <Input
+                        value={option}
+                        placeholder={`Option ${optionIndex + 1}`}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const newOptions = [...q.options];
+                          newOptions[optionIndex] = e.target.value;
+                          handleQuestionChange(i, "options", newOptions);
+                        }}
+                        className="w-full !bg-white !border-gray-300 !text-gray-900"
+                      />
+                      {option.length >= 90 && (
+                        <div className={`text-sm mt-1 ${
+                          option.length > 100 ? 'text-red-500' : 'text-gray-400'
+                        }`}>
+                          {option.length}/100
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -465,6 +490,18 @@ export default function AdminCreatePage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrCodeData, setQRCodeData] = useState("");
   const [editingFormId, setEditingFormId] = useState<string | null>(null); // Track if we're editing
+  
+  // Title validation state
+  const [titleValidation, setTitleValidation] = useState<{
+    isValidating: boolean;
+    isDuplicate: boolean;
+    error: string;
+  }>({
+    isValidating: false,
+    isDuplicate: false,
+    error: ""
+  });
+  const [titleValidationTimeout, setTitleValidationTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
   const { isDark } = useDarkMode();
@@ -476,6 +513,88 @@ export default function AdminCreatePage() {
       setAuthenticated(true);
     }
   }, []);
+
+  // Debounced title validation
+  const validateTitle = async (titleToValidate: string) => {
+    if (!titleToValidate.trim()) {
+      setTitleValidation({
+        isValidating: false,
+        isDuplicate: false,
+        error: ""
+      });
+      return;
+    }
+
+    setTitleValidation(prev => ({ ...prev, isValidating: true }));
+
+    try {
+      const response = await fetch('/api/forms/check-title', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: titleToValidate,
+          excludeFormId: editingFormId // Exclude current form when editing
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setTitleValidation({
+          isValidating: false,
+          isDuplicate: data.isDuplicate,
+          error: data.isDuplicate ? data.message : ""
+        });
+      } else {
+        setTitleValidation({
+          isValidating: false,
+          isDuplicate: false,
+          error: data.error || "Failed to validate title"
+        });
+      }
+    } catch (error) {
+      setTitleValidation({
+        isValidating: false,
+        isDuplicate: false,
+        error: "Network error while validating title"
+      });
+    }
+  };
+
+  // Handle title changes with debouncing
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    
+    // Clear existing timeout
+    if (titleValidationTimeout) {
+      clearTimeout(titleValidationTimeout);
+    }
+    
+    // Clear validation state immediately
+    setTitleValidation({
+      isValidating: false,
+      isDuplicate: false,
+      error: ""
+    });
+    
+    // Set new timeout for validation
+    const timeout = setTimeout(() => {
+      validateTitle(newTitle);
+    }, 1000); // 1 second debounce
+    
+    setTitleValidationTimeout(timeout);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (titleValidationTimeout) {
+        clearTimeout(titleValidationTimeout);
+      }
+    };
+  }, [titleValidationTimeout]);
 
   // Function to download QR code as PNG
   const downloadQRCode = () => {
@@ -739,6 +858,16 @@ export default function AdminCreatePage() {
   }
 
   async function handleSubmit() {
+    // Prevent submission if title is duplicate or validation is in progress
+    if (titleValidation.isDuplicate || titleValidation.isValidating) {
+      return;
+    }
+    
+    // Prevent submission if title is empty
+    if (!title.trim()) {
+      return;
+    }
+    
     setSubmitting(true);
     
     // Build expiration string
@@ -859,6 +988,41 @@ export default function AdminCreatePage() {
     setSubmitting(false);
   }
 
+  // Check if any character limits are exceeded
+  const isCharacterLimitExceeded = () => {
+    // Check title limit
+    if (title.length > 50) return true;
+    
+    // Check description limit
+    if (description.length > 750) return true;
+    
+    // Check question text and options limits
+    for (const q of questions) {
+      if (q.label.length > 200) return true;
+      
+      // Check options for MCQ, checkbox, and Likert questions
+      if (['mcq', 'checkbox', 'likert'].includes(q.type)) {
+        for (const option of q.options) {
+          if (option.length > 100) return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+
+  // Check if form is ready to publish
+  const isFormReady = () => {
+    return (
+      title.trim() !== "" &&
+      questions.length > 0 &&
+      questions.every(q => q.label.trim() !== "") &&
+      !titleValidation.isDuplicate &&
+      !titleValidation.isValidating &&
+      !isCharacterLimitExceeded()
+    );
+  };
+
   if (!authenticated)
     return (
       <div className="min-h-screen flex items-center justify-center font-sans">
@@ -917,14 +1081,10 @@ export default function AdminCreatePage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Form Details</h2>
-            <Button 
-              onClick={handleSubmit} 
-              disabled={submitting || !title.trim() || questions.some(q => !q.label.trim())}
-              className={`px-6 py-2 text-white cursor-pointer ${
-                submitting || !title.trim() || questions.some(q => !q.label.trim())
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-700 hover:bg-blue-800'
-              }`}
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormReady() || submitting}
+              className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <div className="flex items-center gap-2">
@@ -940,12 +1100,45 @@ export default function AdminCreatePage() {
           <div className="space-y-6">
             <div>
               <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</Label>
-          <Input
+              <Input
                 value={title} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
-                className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleTitleChange(e.target.value)}
+                className={`w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                  titleValidation.isDuplicate ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+                }`}
                 placeholder="Enter form title..."
               />
+              {title.length >= 40 && (
+                <div className={`text-sm mt-1 ${
+                  title.length > 50 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+                }`}>
+                  {title.length}/50
+                </div>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                {titleValidation.isValidating && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    Checking title availability...
+                  </div>
+                )}
+                {titleValidation.isDuplicate && (
+                  <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    {titleValidation.error}
+                  </div>
+                )}
+                {!titleValidation.isValidating && !titleValidation.isDuplicate && title.trim() && (
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Title is available
+                  </div>
+                )}
+              </div>
             </div>
             
             <div>
@@ -956,6 +1149,13 @@ export default function AdminCreatePage() {
                 placeholder="Add a description or instructions for respondents?"
                 className="min-h-[100px] w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
+              {description.length >= 740 && (
+                <div className={`text-sm mt-1 ${
+                  description.length > 750 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+                }`}>
+                  {description.length}/750
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1061,21 +1261,21 @@ export default function AdminCreatePage() {
           <div className="flex items-center justify-between">
             <div className="text-sm">
               {questions.length} question{questions.length !== 1 ? 's' : ''} • {
-                !title.trim() ? (
-                  <span className="text-red-600 dark:text-red-400">Add a title to continue</span>
-                ) : questions.some(q => !q.label.trim()) ? (
-                  <span className="text-red-600 dark:text-red-400">Add question text to continue</span>
-                ) : (
-                  <span className="text-green-600 dark:text-green-400">Ready to create</span>
-                )
+                submitting 
+                  ? "Submitting..." 
+                  : isCharacterLimitExceeded() 
+                    ? <span className="text-red-600 dark:text-red-400">Character limits exceeded.</span>
+                    : isFormReady() 
+                      ? <span className="text-green-600 dark:text-green-400">Ready to create</span>
+                      : <span className="text-red-600 dark:text-red-400">Please fill in all required fields</span>
               }
             </div>
             <div className="flex gap-3">
               <Button 
                 onClick={handleSubmit} 
-                disabled={submitting || !title.trim() || questions.some(q => !q.label.trim())}
+                disabled={!isFormReady() || submitting}
                 className={`px-8 py-2 text-white cursor-pointer ${
-                  submitting || !title.trim() || questions.some(q => !q.label.trim())
+                  !isFormReady() || submitting
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-blue-700 hover:bg-blue-800'
                 }`}
@@ -1088,7 +1288,7 @@ export default function AdminCreatePage() {
                 ) : (
                   editingFormId ? "Update Form" : "Publish Form"
                 )}
-          </Button>
+              </Button>
             </div>
           </div>
         </div>
