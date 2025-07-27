@@ -27,6 +27,27 @@ interface FormConfig {
   darkMode?: boolean;
 }
 
+interface FormData {
+  title: string;
+  description?: string;
+  expiration?: string;
+  enforceUnique: boolean;
+  questions: {
+    id: string;
+    type: string;
+    label: string;
+    options: string[];
+    scaleRange?: number;
+    skipLogic?: {
+      enabled: boolean;
+      dependsOn: string;
+      condition: string;
+      value: string;
+    };
+  }[];
+  darkMode?: boolean;
+}
+
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
 const GITHUB_REPO = "nbramia/questions"; 
 const GITHUB_BRANCH = "main";
@@ -36,12 +57,12 @@ const TARGET_PATH = "docs/question";
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 // Function to trim whitespace from form values
-function trimFormValues(data: any) {
+function trimFormValues(data: FormData): FormData {
   return {
     ...data,
     title: data.title?.trim() || "",
     description: data.description?.trim() || "",
-    questions: data.questions?.map((q: any) => ({
+    questions: data.questions?.map((q) => ({
       ...q,
       label: q.label?.trim() || "",
       options: q.options?.map((option: string) => option?.trim() || "") || [],
@@ -71,7 +92,7 @@ export async function POST(req: Request) {
 
     console.log("Creating form with ID:", id);
 
-    const parsedExpiration = parseExpiration(expiration);
+    const parsedExpiration = parseExpiration(expiration || "");
     const config: FormConfig = {
       id,
       title,
