@@ -8,6 +8,24 @@ const FORMS_PATH = "docs/question";
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
+// Function to trim whitespace from form values
+function trimFormValues(data: any) {
+  return {
+    ...data,
+    title: data.title?.trim() || "",
+    description: data.description?.trim() || "",
+    questions: data.questions?.map((q: any) => ({
+      ...q,
+      label: q.label?.trim() || "",
+      options: q.options?.map((option: string) => option?.trim() || "") || [],
+      skipLogic: q.skipLogic ? {
+        ...q.skipLogic,
+        value: q.skipLogic.value?.trim() || ""
+      } : undefined
+    })) || []
+  };
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -19,7 +37,10 @@ export async function POST(
 
     const { id: formId } = await params;
     const body = await request.json();
-    const { title, description, expiration, enforceUnique, questions } = body;
+    
+    // Trim whitespace from all form values
+    const trimmedBody = trimFormValues(body);
+    const { title, description, expiration, enforceUnique, questions } = trimmedBody;
 
     console.log(`Updating form ${formId}`);
 

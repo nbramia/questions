@@ -35,6 +35,24 @@ const TARGET_PATH = "docs/question";
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
+// Function to trim whitespace from form values
+function trimFormValues(data: any) {
+  return {
+    ...data,
+    title: data.title?.trim() || "",
+    description: data.description?.trim() || "",
+    questions: data.questions?.map((q: any) => ({
+      ...q,
+      label: q.label?.trim() || "",
+      options: q.options?.map((option: string) => option?.trim() || "") || [],
+      skipLogic: q.skipLogic ? {
+        ...q.skipLogic,
+        value: q.skipLogic.value?.trim() || ""
+      } : undefined
+    })) || []
+  };
+}
+
 export async function POST(req: Request) {
   try {
     console.log("API route called");
@@ -46,7 +64,10 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const id = nanoid(6);
-    const { title, description, expiration, enforceUnique, questions, darkMode } = body;
+    
+    // Trim whitespace from all form values
+    const trimmedBody = trimFormValues(body);
+    const { title, description, expiration, enforceUnique, questions, darkMode } = trimmedBody;
 
     console.log("Creating form with ID:", id);
 
