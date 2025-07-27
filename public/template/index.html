@@ -250,12 +250,12 @@
                 if (e.target.type !== 'radio') {
                   const radio = this.querySelector('input[type="radio"]');
                   radio.checked = true;
-                  // Trigger visibility update after manual toggle with a small delay
-                  setTimeout(() => {
-                    if (typeof updateQuestionVisibility === 'function' && window.config) {
-                      updateQuestionVisibility(window.config);
-                    }
-                  }, 10);
+                  console.log('Container clicked, radio checked:', radio.checked, 'value:', radio.value);
+                  // Trigger visibility update immediately
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    console.log('Calling updateQuestionVisibility for radio');
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -279,12 +279,12 @@
                 if (e.target.type !== 'radio') {
                   const radio = this.querySelector('input[type="radio"]');
                   radio.checked = true;
-                  // Trigger visibility update after manual toggle with a small delay
-                  setTimeout(() => {
-                    if (typeof updateQuestionVisibility === 'function' && window.config) {
-                      updateQuestionVisibility(window.config);
-                    }
-                  }, 10);
+                  console.log('Container clicked, MCQ radio checked:', radio.checked, 'value:', radio.value);
+                  // Trigger visibility update immediately
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    console.log('Calling updateQuestionVisibility for MCQ radio');
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -308,12 +308,12 @@
                 if (e.target.type !== 'radio') {
                   const radio = this.querySelector('input[type="radio"]');
                   radio.checked = true;
-                  // Trigger visibility update after manual toggle with a small delay
-                  setTimeout(() => {
-                    if (typeof updateQuestionVisibility === 'function' && window.config) {
-                      updateQuestionVisibility(window.config);
-                    }
-                  }, 10);
+                  console.log('Container clicked, Likert radio checked:', radio.checked, 'value:', radio.value);
+                  // Trigger visibility update immediately
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    console.log('Calling updateQuestionVisibility for Likert radio');
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -337,12 +337,12 @@
                 if (e.target.type !== 'checkbox') {
                   const checkbox = this.querySelector('input[type="checkbox"]');
                   checkbox.checked = !checkbox.checked;
-                  // Trigger visibility update after manual toggle with a small delay
-                  setTimeout(() => {
-                    if (typeof updateQuestionVisibility === 'function' && window.config) {
-                      updateQuestionVisibility(window.config);
-                    }
-                  }, 10);
+                  console.log('Container clicked, checkbox checked:', checkbox.checked, 'value:', checkbox.value);
+                  // Trigger visibility update immediately
+                  if (typeof updateQuestionVisibility === 'function' && window.config) {
+                    console.log('Calling updateQuestionVisibility for checkbox');
+                    updateQuestionVisibility(window.config);
+                  }
                 }
               });
               
@@ -647,9 +647,12 @@
           // Debug logging for checkbox includes logic
           if (q.skipLogic && q.skipLogic.condition === "includes") {
             console.log("Checkbox includes debug:");
+            console.log("Question being evaluated:", q.label);
+            console.log("Dependent question:", dependentQuestion.label);
             console.log("Selected values:", selectedValuesArray);
             console.log("Required value:", q.skipLogic.value);
             console.log("Includes check:", selectedValuesArray.includes(q.skipLogic.value));
+            console.log("Current value string:", currentValue);
           }
         } else {
           // For text, textarea, scale, and other input types
@@ -666,11 +669,14 @@
             // For checkbox questions, check if the selected values include the required value
             if (dependentQuestion.type === "checkbox") {
               console.log("Includes condition check:");
+              console.log("Question being evaluated:", q.label);
+              console.log("Dependent question:", dependentQuestion.label);
               console.log("Selected values array:", selectedValuesArray);
               console.log("Required value:", q.skipLogic.value);
               console.log("Type of selected values:", selectedValuesArray.map(v => typeof v));
               console.log("Type of required value:", typeof q.skipLogic.value);
               console.log("Includes result:", selectedValuesArray.includes(q.skipLogic.value));
+              console.log("Should show question:", selectedValuesArray.includes(q.skipLogic.value));
               return selectedValuesArray.includes(q.skipLogic.value);
             }
             return currentValue === q.skipLogic.value;
@@ -694,10 +700,12 @@
       }
 
       function updateQuestionVisibility(cfg) {
+        console.log('updateQuestionVisibility called');
         cfg.questions.forEach((q, i) => {
           const questionElement = document.querySelector(`[data-question-id="${q.id || `q${i}`}"]`);
           if (questionElement) {
             const shouldShow = shouldShowQuestion(q, i, cfg);
+            console.log(`Question "${q.label}" should show:`, shouldShow);
             questionElement.style.display = shouldShow ? "block" : "none";
             
             // Update divider visibility
