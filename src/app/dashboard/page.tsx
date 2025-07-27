@@ -25,9 +25,10 @@ export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState(false);
   const [forms, setForms] = useState<FormInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingResponses, setLoadingResponses] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("created"); // "created", "updated", "responses"
+  const [sortBy, setSortBy] = useState("recent-response");
   const [updatingForms, setUpdatingForms] = useState<{[key: string]: number}>({}); // Track countdown for each form
   const [qrCodeData, setQRCodeData] = useState<{[key: string]: string}>({}); // Track QR codes for each form
   const [showQRModal, setShowQRModal] = useState(false);
@@ -51,8 +52,16 @@ export default function AdminDashboard() {
       const response = await fetch("/api/forms");
       if (response.ok) {
         const data = await response.json();
+        const formsData = data.forms || [];
+        
+        // Set forms immediately without response data
+        setForms(formsData);
+        setLoading(false);
+        
+        // Load response data in the background
+        setLoadingResponses(true);
         const formsWithResponses = await Promise.all(
-          (data.forms || []).map(async (form: FormInfo) => {
+          formsData.map(async (form: FormInfo) => {
             try {
               const responseData = await fetch(`/api/forms/${form.id}/responses`);
               if (responseData.ok) {
@@ -69,13 +78,16 @@ export default function AdminDashboard() {
             return form;
           })
         );
+        
+        // Update forms with response data when it's ready
         setForms(formsWithResponses);
+        setLoadingResponses(false);
       } else {
         setError("Failed to fetch forms");
+        setLoading(false);
       }
     } catch (err) {
       setError("Error loading forms");
-    } finally {
       setLoading(false);
     }
   }, []);
@@ -180,22 +192,23 @@ export default function AdminDashboard() {
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, buttonElement?: HTMLButtonElement) => {
     try {
       await navigator.clipboard.writeText(text);
-      // Show a brief success message
-      const button = event?.target as HTMLButtonElement;
+      
+      // Find the button if not provided
+      const button = buttonElement || (event?.target as HTMLButtonElement)?.closest('button');
       if (button) {
         const originalHTML = button.innerHTML;
         button.innerHTML = `
-          <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
           Copied!
         `;
         setTimeout(() => {
           button.innerHTML = originalHTML;
-        }, 1000);
+        }, 3000);
       }
     } catch (err) {
       console.error('Failed to copy:', err);
@@ -289,11 +302,23 @@ export default function AdminDashboard() {
     .sort((a, b) => {
       switch (sortBy) {
         case "created":
+          // Only consider creation date, not updates
           return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
         case "updated":
-          return new Date(b.updated_at || b.created_at || '').getTime() - new Date(a.updated_at || a.created_at || '').getTime();
+          // Consider both creation and updates - use the most recent of the two
+          const aUpdateTime = Math.max(
+            new Date(a.created_at || '').getTime(),
+            new Date(a.updated_at || '').getTime()
+          );
+          const bUpdateTime = Math.max(
+            new Date(b.created_at || '').getTime(),
+            new Date(b.updated_at || '').getTime()
+          );
+          return bUpdateTime - aUpdateTime;
         case "responses":
           return (b.totalResponses || 0) - (a.totalResponses || 0);
+        case "recent-response":
+          return (b.lastResponseAt ? new Date(b.lastResponseAt).getTime() : 0) - (a.lastResponseAt ? new Date(a.lastResponseAt).getTime() : 0);
         case "name-asc":
           return (a.title || '').localeCompare(b.title || '');
         case "name-desc":
@@ -383,9 +408,10 @@ export default function AdminDashboard() {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm appearance-none bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
+                    <option value="recent-response">Most Recent Response</option>
                     <option value="created">Most Recently Created</option>
                     <option value="updated">Most Recently Updated</option>
-                    <option value="responses">Most Recent Response</option>
+                    <option value="responses">Most Responses</option>
                     <option value="name-asc">Name (A-Z)</option>
                     <option value="name-desc">Name (Z-A)</option>
                   </select>
@@ -501,7 +527,7 @@ export default function AdminDashboard() {
                           </Button>
                           
                           <Button
-                            onClick={() => copyToClipboard(form.url)}
+                            onClick={(e) => copyToClipboard(form.url, e.currentTarget)}
                             variant="outline"
                             size="sm"
                             className="cursor-pointer"
@@ -536,37 +562,43 @@ export default function AdminDashboard() {
                     {/* Middle column - 25% width (1/4) - Response data */}
                     <div className="col-span-1">
                       <div className="text-center flex flex-col justify-center h-full">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                          {form.totalResponses || 0}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          {form.totalResponses === 1 ? 'response' : 'responses'}
-                        </div>
-                        {form.lastResponseAt ? (
+                        {form.totalResponses === undefined ? (
+                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        ) : (
                           <>
                             <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                              {(() => {
-                                const lastResponse = new Date(form.lastResponseAt);
-                                const now = new Date();
-                                const diffMs = now.getTime() - lastResponse.getTime();
-                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                                
-                                if (diffDays > 0) {
-                                  return `${diffDays}d`;
-                                } else if (diffHours > 0) {
-                                  return `${diffHours}h`;
-                                } else {
-                                  return `${diffMinutes}m`;
-                                }
-                              })()}
+                              {form.totalResponses || 0}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              since last response
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                              {form.totalResponses === 1 ? 'response' : 'responses'}
                             </div>
+                            {form.lastResponseAt ? (
+                              <>
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                                  {(() => {
+                                    const lastResponse = new Date(form.lastResponseAt);
+                                    const now = new Date();
+                                    const diffMs = now.getTime() - lastResponse.getTime();
+                                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                    
+                                    if (diffDays > 0) {
+                                      return `${diffDays}d`;
+                                    } else if (diffHours > 0) {
+                                      return `${diffHours}h`;
+                                    } else {
+                                      return `${diffMinutes}m`;
+                                    }
+                                  })()}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  since last response
+                                </div>
+                              </>
+                            ) : null}
                           </>
-                        ) : null}
+                        )}
                       </div>
                     </div>
 
