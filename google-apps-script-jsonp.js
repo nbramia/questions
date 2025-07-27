@@ -34,7 +34,7 @@ function handleRequest(e) {
     // Get or create the sheet for this question
     const questionId = data.question_id;
     const formTitle = data.form_title || questionId; // Use form title if available, fallback to ID
-    let sheet = getOrCreateSheet(spreadsheet, questionId, data); // Use questionId as sheet name
+    let sheet = getOrCreateSheet(spreadsheet, formTitle, data); // Use formTitle as sheet name
     
     // Prepare the row data
     const rowData = [
@@ -118,12 +118,15 @@ function handleRequest(e) {
 }
 
 function getOrCreateSheet(spreadsheet, questionId, data) {
+  // Use form title for sheet name, fallback to questionId if no title
+  const sheetName = data.form_title || questionId;
+  
   // Try to get existing sheet
-  let sheet = spreadsheet.getSheetByName(questionId);
+  let sheet = spreadsheet.getSheetByName(sheetName);
   
   if (!sheet) {
     // Create new sheet
-    sheet = spreadsheet.insertSheet(questionId);
+    sheet = spreadsheet.insertSheet(sheetName);
     
     // Set up headers
     const headers = ['Timestamp', 'IP Address', 'User Agent'];
