@@ -1088,7 +1088,7 @@ export default function AdminCreatePage() {
             >
               {submitting ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   {editingFormId ? "Updating..." : "Creating..."}
                 </div>
               ) : (
@@ -1118,7 +1118,7 @@ export default function AdminCreatePage() {
               <div className="flex items-center gap-2 mt-2">
                 {titleValidation.isValidating && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                     Checking title availability...
                   </div>
                 )}
@@ -1282,7 +1282,7 @@ export default function AdminCreatePage() {
               >
                 {submitting ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     {editingFormId ? "Updating..." : "Creating..."}
                   </div>
                 ) : (

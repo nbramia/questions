@@ -457,7 +457,7 @@ export default function AdminDashboard() {
         {loading ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <div className="flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-3 text-gray-600 dark:text-gray-300">Loading forms...</span>
             </div>
           </div>
@@ -563,7 +563,7 @@ export default function AdminDashboard() {
                     <div className="col-span-1">
                       <div className="text-center flex flex-col justify-center h-full">
                         {form.totalResponses === undefined ? (
-                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
                         ) : (
                           <>
                             <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
