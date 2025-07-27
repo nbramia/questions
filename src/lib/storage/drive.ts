@@ -118,13 +118,16 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
     const jsonFileName = `20q-session-${session.id}.json`;
 
     console.log('Creating JSON file in Google Drive...');
-    const jsonFile = await drive.files.create({
+    const createParams = {
       media: {
         mimeType: 'application/json',
         body: jsonContent, // Plain string - no .pipe needed
       },
-      fields: 'id',
-    });
+      uploadType: 'media', // Force simple upload
+    };
+    console.log('Google Drive create parameters:', JSON.stringify(createParams, null, 2));
+    
+    const jsonFile = await drive.files.create(createParams);
     console.log('JSON file created successfully:', jsonFile.data.id);
 
     // Update the file with metadata after creation
@@ -152,13 +155,16 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
 
       const summaryFileName = `20q-session-${session.id}-summary.txt`;
 
-      const summaryFile = await drive.files.create({
+      const summaryCreateParams = {
         media: {
           mimeType: 'text/plain',
           body: summaryContent, // Plain string - no .pipe needed
         },
-        fields: 'id',
-      });
+        uploadType: 'media', // Force simple upload
+      };
+      console.log('Google Drive summary create parameters:', JSON.stringify(summaryCreateParams, null, 2));
+      
+      const summaryFile = await drive.files.create(summaryCreateParams);
       console.log('Summary file created successfully:', summaryFile.data.id);
 
       // Update the summary file with metadata after creation
