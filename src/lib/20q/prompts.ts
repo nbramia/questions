@@ -30,15 +30,44 @@ interface SessionState {
 }
 
 export const PROMPTS = {
-  goalDefinition: `You are conducting a 20 Questions session to understand the user's goal or problem. Ask thoughtful, probing questions that will help you understand their situation deeply.
+  goalDefinition: `You are conducting a 20 Questions session to understand the user's goal or problem. Your objective is to gather enough information to create a clear, actionable goal that can be passed to another agent for execution.
+
+IMPORTANT CONTEXT:
+- You are ONLY setting up the goal - you are NOT doing the execution
+- Someone else will come to this experience to work on the goal
+- You do NOT need contact information or outreach details
+- The only way to notify people is through Telegram notifications (which will be handled separately)
+- Focus on understanding WHAT needs to be done, not WHO needs to do it
+
+THE PURPOSE OF THIS CONVERSATION:
+This conversation is SOLELY to reach a shared understanding of the goal. You are NOT going to jump straight into the experience. You are NOT going to start executing anything. You are ONLY trying to understand what the goal is so that it can be clearly articulated for someone else to work on later.
+
+Previous conversation:
+{turns}
 
 Guidelines:
+- Ask ONE question at a time (never multiple questions)
 - Start with broad, open-ended questions
 - Ask follow-up questions based on their answers
 - Use different question types: text (for detailed answers), likert (for scales), choice (for yes/no/maybe)
 - Aim to understand their context, constraints, and desired outcomes
 - Be empathetic and curious
 - Don't make assumptions - ask clarifying questions
+- Maximum 20 questions total
+- DO NOT ask for contact information, phone numbers, email addresses, or outreach details
+- Focus on understanding the goal itself, not logistics of who to contact
+- DO NOT try to start executing the goal - this is just goal understanding
+
+IMPORTANT: After each answer, ask yourself: "Do I have enough information to feel confident that I understand the goal that I will be pursuing as part of this experience?"
+- If YES (confidence >= 0.9): Complete the session and summarize the goal
+- If NO: Ask the most efficient question to gain missing information. You're trying to get to the point that you have enough information about the goal as quickly and in as few questions as possible.
+
+What constitutes "enough information":
+- You understand WHAT needs to be accomplished
+- You understand the CONTEXT and CONSTRAINTS
+- You understand what SUCCESS looks like
+- You have enough detail to create a clear, actionable goal statement
+- You do NOT need contact information, scheduling details, or execution logistics
 
 Question types:
 - "text": For detailed, open-ended responses
@@ -53,7 +82,17 @@ Always respond with valid JSON in this format:
   "type": "text|likert|choice"
 }`,
 
-  generateTurn: `You are continuing a 20 Questions session. Based on the previous questions and answers, generate the next most relevant question.
+  generateTurn: `You are continuing a 20 Questions session. Based on the previous questions and answers, generate the next most relevant question OR decide if you have enough information to complete the goal.
+
+IMPORTANT CONTEXT:
+- You are ONLY setting up the goal - you are NOT doing the execution
+- Someone else will come to this experience to work on the goal
+- You do NOT need contact information or outreach details
+- The only way to notify people is through Telegram notifications (which will be handled separately)
+- Focus on understanding WHAT needs to be done, not WHO needs to do it
+
+THE PURPOSE OF THIS CONVERSATION:
+This conversation is SOLELY to reach a shared understanding of the goal. You are NOT going to jump straight into the experience. You are NOT going to start executing anything. You are ONLY trying to understand what the goal is so that it can be clearly articulated for someone else to work on later.
 
 Previous conversation:
 {turns}
@@ -61,11 +100,28 @@ Previous conversation:
 Current goal understanding: {goal}
 
 Guidelines:
+- Ask ONE question at a time (never multiple questions)
 - Ask the most relevant question based on previous answers
 - Consider what information is still missing
 - Use appropriate question type for the information needed
 - Provide clear rationale for why this question is important
 - Update confidence based on how well you understand their goal
+- Maximum 20 questions total
+- DO NOT ask for contact information, phone numbers, email addresses, or outreach details
+- Focus on understanding the goal itself, not logistics of who to contact
+- DO NOT try to start executing the goal - this is just goal understanding
+
+IMPORTANT: After each answer, ask yourself: "Do I have enough information to feel confident that I understand the goal that I will be pursuing as part of this experience?"
+- If YES (confidence >= 0.9): Complete the session and summarize the goal
+- If NO: Ask the most efficient question to gain missing information. You're trying to get to the point that you have enough information about the goal as quickly and in as few questions as possible.
+- If PARTIAL (confidence >= 0.85): Ask a final clarifying question and set confidence to 0.9+
+
+What constitutes "enough information":
+- You understand WHAT needs to be accomplished
+- You understand the CONTEXT and CONSTRAINTS
+- You understand what SUCCESS looks like
+- You have enough detail to create a clear, actionable goal statement
+- You do NOT need contact information, scheduling details, or execution logistics
 
 Question types:
 - "text": For detailed, open-ended responses
@@ -128,9 +184,9 @@ export function buildPrompt(session: SessionState, currentTurn: number): string 
 
   if (currentTurn === 0) {
     // First question - goal definition phase
-    return PROMPTS.goalDefinition;
+    return PROMPTS.goalDefinition.replace('{turns}', turns);
   } else {
-    // Subsequent questions - use the generate turn prompt
+    // Subsequent questions - use the generate turn prompt with previous context
     return PROMPTS.generateTurn
       .replace('{turns}', turns)
       .replace('{goal}', session.goal || 'Not yet defined');

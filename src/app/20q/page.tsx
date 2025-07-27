@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { QuestionCard } from '@/components/20q/QuestionCard';
 import { SessionSummary } from '@/components/20q/SessionSummary';
+import { Button } from '@/components/ui/button';
 
 interface QuestionTurn {
   question: string;
@@ -37,8 +38,21 @@ export default function TwentyQuestionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Generate next question from agent
-  const generateNextQuestion = useCallback(async () => {
+  const generateNextQuestion = useCallback(async (sessionData?: SessionState) => {
     if (loading) return;
+    
+    const currentSession = sessionData || session;
+    
+    // Check if we've reached the 20 question limit
+    if (currentSession.turns.length >= 20) {
+      console.log('Reached 20 question limit, completing session');
+      setSession(prev => ({
+        ...prev,
+        status: 'completed',
+        finalSummary: 'Session completed after 20 questions'
+      }));
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -50,8 +64,8 @@ export default function TwentyQuestionsPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          session,
-          currentTurn: session.turns.length
+          session: currentSession,
+          currentTurn: currentSession.turns.length
         })
       });
 
@@ -61,23 +75,59 @@ export default function TwentyQuestionsPage() {
 
       const data = await response.json();
       
-      // Add the new question turn
-      setSession(prev => ({
-        ...prev,
-        turns: [...prev.turns, {
-          question: data.question,
-          answer: '',
-          rationale: data.rationale,
-          type: data.type
-        }]
-      }));
+      // Check if confidence is high enough to complete the session
+      if (data.confidence >= 0.9) {
+        console.log('High confidence achieved, completing session');
+        
+        // Generate a proper goal summary using the AI
+        try {
+          const summaryResponse = await fetch('/api/20q/summarize-goal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session: currentSession
+            })
+          });
 
-      // If goal is confirmed, save session
-      if (data.confidence > 0.8 && !session.goalConfirmed) {
+          if (summaryResponse.ok) {
+            const summaryData = await summaryResponse.json();
+            setSession(prev => ({
+              ...prev,
+              status: 'completed',
+              goalConfirmed: true,
+              goal: summaryData.goal,
+              finalSummary: summaryData.summary
+            }));
+          } else {
+            // Fallback if summary generation fails
+            setSession(prev => ({
+              ...prev,
+              status: 'completed',
+              goalConfirmed: true,
+              goal: 'Goal understanding achieved',
+              finalSummary: 'Session completed with high confidence'
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to generate goal summary:', err);
+          setSession(prev => ({
+            ...prev,
+            status: 'completed',
+            goalConfirmed: true,
+            goal: 'Goal understanding achieved',
+            finalSummary: 'Session completed with high confidence'
+          }));
+        }
+      } else {
+        // Add the new question turn
         setSession(prev => ({
           ...prev,
-          goalConfirmed: true,
-          goal: prev.turns.map(t => t.answer).join(' ')
+          turns: [...prev.turns, {
+            question: data.question,
+            answer: '',
+            rationale: data.rationale,
+            type: data.type
+          }]
         }));
       }
 
@@ -90,18 +140,113 @@ export default function TwentyQuestionsPage() {
 
   // Handle answer submission
   const handleAnswerSubmit = useCallback(async (turnIndex: number, answer: string) => {
-    setSession(prev => ({
-      ...prev,
-      turns: prev.turns.map((turn, index) => 
+    console.log('Submitting answer:', { turnIndex, answer });
+    
+    // Update the session state with the new answer
+    const updatedSession = {
+      ...session,
+      turns: session.turns.map((turn, index) => 
         index === turnIndex ? { ...turn, answer } : turn
       )
-    }));
+    };
+    
+    console.log('Updated session:', updatedSession);
+    setSession(updatedSession);
 
-    // Generate next question after a short delay
-    setTimeout(() => {
-      generateNextQuestion();
-    }, 500);
-  }, [generateNextQuestion]);
+    // Check if we've reached the 20 question limit
+    if (updatedSession.turns.length >= 20) {
+      console.log('Reached 20 question limit, completing session');
+      setSession(prev => ({
+        ...prev,
+        status: 'completed',
+        finalSummary: 'Session completed after 20 questions'
+      }));
+      return;
+    }
+
+    // Generate next question with the updated session data
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/20q/generate-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session: updatedSession,
+          currentTurn: updatedSession.turns.length
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate question');
+      }
+
+      const data = await response.json();
+      
+      // Check if confidence is high enough to complete the session
+      if (data.confidence >= 0.9) {
+        console.log('High confidence achieved, completing session');
+        
+        // Generate a proper goal summary using the AI
+        try {
+          const summaryResponse = await fetch('/api/20q/summarize-goal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session: updatedSession
+            })
+          });
+
+          if (summaryResponse.ok) {
+            const summaryData = await summaryResponse.json();
+            setSession(prev => ({
+              ...prev,
+              status: 'completed',
+              goalConfirmed: true,
+              goal: summaryData.goal,
+              finalSummary: summaryData.summary
+            }));
+          } else {
+            // Fallback if summary generation fails
+            setSession(prev => ({
+              ...prev,
+              status: 'completed',
+              goalConfirmed: true,
+              goal: 'Goal understanding achieved',
+              finalSummary: 'Session completed with high confidence'
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to generate goal summary:', err);
+          setSession(prev => ({
+            ...prev,
+            status: 'completed',
+            goalConfirmed: true,
+            goal: 'Goal understanding achieved',
+            finalSummary: 'Session completed with high confidence'
+          }));
+        }
+      } else {
+        // Add the new question turn
+        setSession(prev => ({
+          ...prev,
+          turns: [...prev.turns, {
+            question: data.question,
+            answer: '',
+            rationale: data.rationale,
+            confidenceAfter: data.confidence,
+            type: data.type
+          }]
+        }));
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
 
   // Initialize with first question
   useEffect(() => {
@@ -147,6 +292,18 @@ export default function TwentyQuestionsPage() {
               : 'Let\'s understand your goal through a series of questions.'
             }
           </p>
+          <div className="mt-4">
+            <div className="flex justify-between text-sm text-gray-600 mb-1">
+              <span>Progress</span>
+              <span>{session.turns.length} / 20 questions</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(session.turns.length / 20) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -172,6 +329,61 @@ export default function TwentyQuestionsPage() {
           <div className="mt-6 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-2 text-gray-600">Generating next question...</p>
+          </div>
+        )}
+
+        {!loading && session.turns.length > 0 && (
+          <div className="mt-6 text-center">
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  // Generate a proper goal summary using the AI
+                  const summaryResponse = await fetch('/api/20q/summarize-goal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      session
+                    })
+                  });
+
+                  if (summaryResponse.ok) {
+                    const summaryData = await summaryResponse.json();
+                    setSession(prev => ({
+                      ...prev,
+                      status: 'completed',
+                      goalConfirmed: true,
+                      goal: summaryData.goal,
+                      finalSummary: summaryData.summary
+                    }));
+                  } else {
+                    // Fallback if summary generation fails
+                    setSession(prev => ({
+                      ...prev,
+                      status: 'completed',
+                      goalConfirmed: true,
+                      goal: 'Goal understanding achieved',
+                      finalSummary: 'Session completed early by user'
+                    }));
+                  }
+                } catch (err) {
+                  console.error('Failed to generate goal summary:', err);
+                  setSession(prev => ({
+                    ...prev,
+                    status: 'completed',
+                    goalConfirmed: true,
+                    goal: 'Goal understanding achieved',
+                    finalSummary: 'Session completed early by user'
+                  }));
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              I'm satisfied with my goal - Stop Early
+            </Button>
           </div>
         )}
       </div>

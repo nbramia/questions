@@ -32,15 +32,22 @@ export function SessionSummary({ session }: SessionSummaryProps) {
     .reduce((sum, turn) => sum + (turn.confidenceAfter || 0), 0) / 
     session.turns.filter(turn => turn.confidenceAfter !== undefined).length;
 
+  const handleStartExecution = () => {
+    // TODO: Navigate to goal execution phase
+    // This would be a separate experience where an agent works on the goal
+    console.log('Starting goal execution for:', session.goal);
+    alert('Goal execution phase would start here. This is where an agent would work on achieving your goal.');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Session Complete
+            Goal Understanding Complete
           </h1>
           <p className="text-gray-600">
-            Your 20 Questions session has been completed and saved.
+            We've successfully captured your goal. You can now proceed to the execution phase.
           </p>
         </div>
 
@@ -48,19 +55,19 @@ export function SessionSummary({ session }: SessionSummaryProps) {
           {/* Summary Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Session Summary</CardTitle>
+              <CardTitle>Confirmed Goal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Goal</h3>
-                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-2">AI's Understanding of Your Goal</h3>
+                <p className="text-gray-700 bg-green-50 p-3 rounded-lg border border-green-200">
                   {session.goal || 'No goal defined'}
                 </p>
               </div>
               
               {session.finalSummary && (
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">AI Summary</h3>
+                  <h3 className="font-medium text-gray-900 mb-2">Context & Considerations</h3>
                   <p className="text-gray-700 bg-blue-50 p-3 rounded-lg">
                     {session.finalSummary}
                   </p>
@@ -68,11 +75,11 @@ export function SessionSummary({ session }: SessionSummaryProps) {
               )}
               
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Confidence</h3>
+                <h3 className="font-medium text-gray-900 mb-2">Confidence Level</h3>
                 <div className="flex items-center space-x-2">
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${(averageConfidence || 0) * 100}%` }}
                     />
                   </div>
@@ -80,6 +87,18 @@ export function SessionSummary({ session }: SessionSummaryProps) {
                     {Math.round((averageConfidence || 0) * 100)}%
                   </span>
                 </div>
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  onClick={handleStartExecution}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  Start Goal Execution
+                </Button>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  An AI agent will now work on achieving your goal
+                </p>
               </div>
             </CardContent>
           </Card>

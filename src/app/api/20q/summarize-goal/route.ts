@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { buildPrompt } from '@/lib/20q/prompts';
 
 interface QuestionTurn {
   question: string;
@@ -20,43 +19,41 @@ interface SessionState {
   userStopped?: boolean;
 }
 
-interface GenerateQuestionRequest {
+interface SummarizeGoalRequest {
   session: SessionState;
-  currentTurn: number;
 }
 
-interface GenerateQuestionResponse {
-  question: string;
-  rationale: string;
-  confidence: number;
-  type: 'text' | 'likert' | 'choice';
+interface SummarizeGoalResponse {
+  goal: string;
+  summary: string;
 }
 
 export async function POST(req: Request) {
   try {
-    const body: GenerateQuestionRequest = await req.json();
-    const { session, currentTurn } = body;
+    const body: SummarizeGoalRequest = await req.json();
+    const { session } = body;
 
-    // Debug logging
-    console.log('Generate question request:', {
-      currentTurn,
-      sessionTurns: session.turns.length,
-      lastAnswer: session.turns[session.turns.length - 1]?.answer || 'No answer'
-    });
+    // Build the conversation history
+    const turns = session.turns.map((turn, index) => 
+      `Q${index + 1}: ${turn.question}\nA: ${turn.answer}`
+    ).join('\n\n');
 
-    // Validate request
-    if (!session || typeof currentTurn !== 'number') {
-      return NextResponse.json(
-        { error: 'Invalid request body' },
-        { status: 400 }
-      );
-    }
+    // Create the prompt for goal summarization
+    const prompt = `Based on the following conversation, I need you to:
 
-    // Build the prompt for the LLM
-    const prompt = buildPrompt(session, currentTurn);
-    
-    // Debug logging
-    console.log('Generated prompt:', prompt.substring(0, 200) + '...');
+1. Articulate a clear, actionable goal that summarizes what the user wants to accomplish
+2. Provide a brief summary of the key context and constraints
+
+Conversation:
+${turns}
+
+Please respond with JSON in this format:
+{
+  "goal": "A clear, concise statement of what needs to be accomplished",
+  "summary": "Brief context about the situation, constraints, and key considerations"
+}
+
+The goal should be specific enough that another agent could work on it effectively.`;
 
     // Call OpenAI API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -70,7 +67,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: 'system',
-            content: 'You are an intelligent agent conducting a 20 Questions session. Your goal is to ask the most relevant question to understand the user\'s goal or problem. Always respond with valid JSON.'
+            content: 'You are an AI assistant that creates clear, actionable goals based on conversation summaries. Always respond with valid JSON.'
           },
           {
             role: 'user',
@@ -85,7 +82,7 @@ export async function POST(req: Request) {
     if (!openaiResponse.ok) {
       console.error('OpenAI API error:', await openaiResponse.text());
       return NextResponse.json(
-        { error: 'Failed to generate question' },
+        { error: 'Failed to generate goal summary' },
         { status: 500 }
       );
     }
@@ -100,11 +97,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Debug logging
-    console.log('OpenAI response:', content);
-
     // Parse the JSON response
-    let response: GenerateQuestionResponse;
+    let response: SummarizeGoalResponse;
     try {
       response = JSON.parse(content);
     } catch {
@@ -116,36 +110,20 @@ export async function POST(req: Request) {
     }
 
     // Validate response structure
-    if (!response.question || !response.rationale || typeof response.confidence !== 'number' || !response.type) {
+    if (!response.goal || !response.summary) {
       return NextResponse.json(
         { error: 'Invalid response structure from AI' },
         { status: 500 }
       );
     }
 
-    // Debug logging for confidence
-    console.log('AI Confidence Assessment:', {
-      confidence: response.confidence,
-      question: response.question,
-      rationale: response.rationale,
-      shouldComplete: response.confidence >= 0.9
-    });
-
-    // Ensure confidence is between 0 and 1
-    response.confidence = Math.max(0, Math.min(1, response.confidence));
-
-    // Ensure type is valid
-    if (!['text', 'likert', 'choice'].includes(response.type)) {
-      response.type = 'text';
-    }
-
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Error in generate-question:', error);
+    console.error('Error in summarize-goal:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+} 
