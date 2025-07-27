@@ -1,333 +1,565 @@
-# Feedback Form Creator
+In the context of this development, one of the main purposes of the README is actually to maintain context for AI agents. AI can only hold so much context in its context window, and I want the README to be a resource for them when they lose all memory – to be able to go back and quickly get back up to speed on exactly how everything fits together. Maintain it accordingly!
 
-A Next.js application that allows you to create and deploy custom feedback forms with various question types, conditional logic, and Google Sheets integration. The application is deployed on Vercel with a custom domain and uses GitHub Pages for form storage.
+# Feedback Forms Platform + 20 Questions Experience
 
-## Architecture Overview
+A comprehensive serverless platform featuring two distinct but complementary experiences:
 
-The application uses a **hybrid architecture**:
+1. **Dynamic Feedback Forms**: Create, manage, and collect responses from customizable forms
+2. **20 Questions AI Experience**: Interactive AI-guided goal exploration and problem-solving
 
-- **Vercel**: Hosts the Next.js application (admin panel, API routes, dynamic routes)
-- **GitHub Pages**: Stores and serves the actual form files (HTML + config)
-- **Custom Domain**: Routes everything through `ramia.us` for a seamless experience
+Both systems are built with Next.js 15, TypeScript, and integrated with Google services for seamless data management.
 
-### Data Flow
+## 🏗️ Platform Architecture Overview
 
-1. **Form Creation**: Admin panel → Vercel API → GitHub Pages deployment
-2. **Form Viewing**: User visits URL → Vercel dynamic route → GitHub Pages fetch → Form display
-3. **Form Submission**: User submits → Google Apps Script → Google Sheets
+This application uses a **hybrid serverless architecture** combining multiple services:
 
-## Features
+- **Next.js 15 (Vercel)**: Admin interface, form creation, AI interactions, and API routes
+- **GitHub Pages**: Static form hosting and storage  
+- **Google Apps Script + Sheets**: Response collection and storage
+- **Google Drive**: 20Q session storage and summaries
+- **Google Calendar**: Smart notification scheduling
+- **OpenAI API**: AI-powered question generation and analysis
+- **Telegram Bot API**: Intelligent user notifications
+- **Custom Domain**: Unified experience through `ramia.us`
 
-- **Multiple Question Types**: Text responses, Yes/No, Multiple Choice, Checkboxes, Scale ratings, and Likert scales
-- **Conditional Logic**: Show/hide questions based on previous answers
-- **Form Expiration**: Set forms to expire after a specified time
-- **Unique Submissions**: Prevent duplicate submissions by IP address
-- **Google Sheets Integration**: Automatically saves responses to Google Sheets
-- **Drag & Drop Interface**: Reorder questions easily
-- **Real-time Preview**: See form changes as you build them
-- **Responsive Design**: Works on desktop and mobile devices
-- **Custom Domain**: Professional URLs like `ramia.us/questions/[form-id]`
+### 🎯 How the Two Systems Co-Exist
 
-## Tech Stack
+The platform operates as **two parallel but integrated systems**:
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS 4
-- **Drag & Drop**: @dnd-kit
-- **UI Components**: Radix UI primitives
-- **Deployment**: Vercel with custom domain
-- **Form Storage**: GitHub Pages
-- **Data Storage**: Google Sheets via Google Apps Script
+#### **Existing Forms Platform**
+- **Purpose**: Traditional form creation and response collection
+- **URLs**: `/dashboard`, `/create`, `/questions/[id]`
+- **Storage**: GitHub Pages + Google Sheets
+- **Workflow**: Admin creates → Users fill → Responses collected
 
-## Getting Started
+#### **20 Questions Experience**
+- **Purpose**: AI-guided goal exploration and problem-solving
+- **URLs**: `/20q`, `/20q/session/[id]`
+- **Storage**: Google Drive + Local Storage
+- **Workflow**: AI asks → User answers → Insights generated
+
+#### **Shared Infrastructure**
+- **Same Next.js app** - unified deployment and hosting
+- **Same UI components** - consistent design system
+- **Same authentication** - password-protected admin areas
+- **Same domain** - `ramia.us` serves both experiences
+- **Same Google services** - leveraging existing integrations
+
+### Key URLs
+| Component | URL | Purpose |
+|-----------|-----|---------|
+| Landing Page | `https://ramia.us/` | Password authentication and navigation |
+| Admin Dashboard | `https://ramia.us/dashboard` | Form management interface |
+| Create/Edit Forms | `https://ramia.us/create` | Form builder with drag-and-drop |
+| Live Forms | `https://ramia.us/questions/<formId>` | Public form access |
+| **20 Questions** | `https://ramia.us/20q` | **AI-guided goal exploration** |
+| **20Q Sessions** | `https://ramia.us/20q/session/<id>` | **Completed session review** |
+| Static Files | `https://nbramia.github.io/questions/question/<formId>/` | Raw form files |
+
+## 🔧 Core Data Structures & Interfaces
+
+### Forms Platform Interfaces
+```typescript
+interface Question {
+  id: string;
+  type: string; // "text" | "yesno" | "multiple" | "checkbox" | "scale" | "likert"
+  label: string;
+  options: string[];
+  scaleRange?: number;
+  skipLogic?: {
+    enabled: boolean;
+    dependsOn: string;
+    condition: string; // "equals" | "contains" | "greater_than" | etc.
+    value: string;
+  };
+}
+
+interface FormData {
+  formId?: string;
+  title: string;
+  description?: string;
+  questions: Question[];
+  enforceUnique?: boolean;
+  expires_at?: string;
+}
+```
+
+### 20Q Platform Interfaces
+```typescript
+interface QuestionTurn {
+  question: string;
+  answer: string;
+  rationale?: string;
+  confidenceAfter?: number;
+  type: 'text' | 'likert' | 'choice';
+}
+
+interface SessionState {
+  id: string;
+  createdAt: string;
+  goal: string;
+  goalConfirmed: boolean;
+  turns: QuestionTurn[];
+  finalSummary?: string;
+  status: 'in-progress' | 'completed';
+  userStopped?: boolean;
+}
+```
+
+### Key Implementation Patterns
+
+#### **Forms Platform**
+- **Static Generation**: Forms deployed as static HTML to GitHub Pages
+- **JSONP Submission**: Cross-origin form submissions via Google Apps Script
+- **GitHub API**: Dynamic form creation and management
+- **Google Sheets**: One sheet per form for response storage
+
+#### **20Q Platform**
+- **Real-time AI**: OpenAI GPT-4 for dynamic question generation
+- **Session Persistence**: Google Drive for session storage
+- **Local Caching**: Browser localStorage for offline capability
+- **Smart Notifications**: Calendar-aware Telegram notifications
+
+## 📋 Features
+
+### Form Management (Existing)
+- **Multiple Question Types**: Text areas, Yes/No, Multiple Choice, Checkboxes, Scale sliders (1-N), Likert scales
+- **Conditional Logic (Skip Logic)**: Show/hide questions based on previous answers with various conditions (equals, contains, includes, greater than, etc.)
+- **Form Expiration**: Time-based expiration (minutes, hours, days) or manual disable/enable
+- **Unique Submissions**: IP-based duplicate prevention
+- **Drag & Drop Interface**: Reorder questions with @dnd-kit
+- **Real-time Preview**: Live form preview as you build
+
+### Admin Dashboard (Existing)
+- **Form Listing**: View all forms with search, filtering, and sorting
+- **Response Analytics**: View response counts and last response times
+- **Quick Actions**: Edit, Duplicate, Enable/Disable, Delete, Copy links, Generate QR codes
+- **Status Management**: Active/Disabled status with expiration tracking
+- **Real-time Updates**: 60-second countdown for status changes with automatic refresh
+
+### Response Collection (Existing)
+- **Google Sheets Integration**: Automatic response storage with dynamic sheet creation
+- **JSONP Support**: Cross-origin form submissions without CORS issues
+- **Response Statistics**: Total count and last response timestamp tracking
+- **IP Tracking**: User agent and IP logging for uniqueness enforcement
+
+## 🤖 20 Questions AI Experience
+
+### Core Features
+- **AI-Powered Question Generation**: Dynamic questions based on user responses and goals
+- **Sequential Goal Exploration**: Progressive understanding through intelligent questioning
+- **Multiple Input Types**: Text responses, Likert scales (1-5), and choice selections
+- **Real-time Session Management**: Auto-save and resume functionality
+- **Intelligent Summaries**: AI-generated insights and recommendations
+- **Smart Notifications**: Calendar-aware nudging via Telegram
+
+### Question Types
+| Type | Input | Use Case |
+|------|-------|----------|
+| **Text** | Textarea | Detailed responses, open-ended exploration |
+| **Likert** | 1-5 Scale | Agreement levels, preference ratings |
+| **Choice** | Yes/No/Maybe | Quick decisions, binary choices |
+
+### Session Flow
+1. **Goal Definition**: AI asks initial questions to understand user's objective
+2. **Progressive Exploration**: Each answer informs the next question
+3. **Confidence Tracking**: AI monitors understanding level (0-100%)
+4. **Session Completion**: Automatic summary generation when goal is clear
+5. **Smart Follow-up**: Calendar-aware notifications for continued progress
+
+### AI Capabilities
+- **Contextual Understanding**: Remembers all previous answers
+- **Adaptive Questioning**: Adjusts question type and depth based on responses
+- **Confidence Scoring**: Tracks how well the AI understands the user's goal
+- **Insight Generation**: Creates actionable summaries and recommendations
+- **Calendar Integration**: Analyzes schedule to suggest optimal notification times
+
+### Session Management
+- **Persistent Storage**: Google Drive integration for session backup
+- **Local Caching**: Browser storage for offline capability
+- **Session Recovery**: Resume interrupted sessions
+- **Export Options**: JSON and text summary formats
+- **Privacy Focused**: No personal data collection beyond session content
+
+### Smart Notifications
+- **Calendar Analysis**: Reviews upcoming events to find optimal timing
+- **AI Decision Making**: Determines if and when to send nudges
+- **Telegram Integration**: Direct messaging with session links
+- **Contextual Messages**: Personalized reminders based on goal progress
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Next.js 15**: App Router with TypeScript
+- **React 19**: Modern React with hooks and concurrent features
+- **Tailwind CSS 4**: Utility-first styling with dark mode support
+- **Radix UI**: Accessible component primitives
+- **@dnd-kit**: Drag and drop functionality (forms)
+- **qrcode-svg**: QR code generation (forms)
+
+### Backend & Storage
+- **Vercel**: Serverless hosting and API routes
+- **GitHub API**: Form file storage and version control
+- **Google Apps Script**: Response processing and storage (forms)
+- **Google Sheets**: Response data warehouse (forms)
+- **Google Drive**: 20Q session storage and summaries
+- **Google Calendar**: Smart notification scheduling
+- **OpenAI API**: GPT-4 for question generation and analysis
+- **Telegram Bot API**: Intelligent user notifications
+
+### Development
+- **TypeScript**: Full type safety
+- **ESLint**: Code linting and formatting
+- **PostCSS**: CSS processing
+
+## 📁 Project Structure
+
+```
+├── src/app/
+│   ├── page.tsx                    # Root landing page with auth
+│   ├── dashboard/page.tsx          # Admin dashboard (client component)
+│   ├── create/page.tsx             # Form builder (client component)
+│   ├── questions/[id]/page.tsx     # Dynamic form viewer
+│   ├── 20q/                       # 20 Questions AI Experience
+│   │   ├── page.tsx               # Main 20Q interface
+│   │   └── session/[id]/page.tsx  # Session review
+│   ├── api/
+│   │   ├── create-page/route.ts    # Form creation & GitHub deployment
+│   │   ├── forms/                  # Form management APIs
+│   │   └── 20q/                   # 20Q AI APIs
+│   │       ├── generate-question/  # AI question generation
+│   │       ├── save-session/       # Session storage
+│   │       ├── notify/             # Telegram notifications
+│   │       ├── schedule-nudge/     # Smart notification scheduling
+│   │       └── session/[id]/       # Session retrieval
+│   └── components/
+│       ├── ui/                     # Reusable UI components
+│       └── 20q/                   # 20Q-specific components
+│           ├── QuestionCard.tsx    # Individual question interface
+│           ├── WhyThisQuestion.tsx # AI rationale display
+│           └── SessionSummary.tsx  # Session completion view
+├── src/lib/
+│   ├── 20q/                       # 20Q AI utilities
+│   │   ├── agent.ts               # AI interaction logic
+│   │   ├── prompts.ts             # LLM prompt templates
+│   │   ├── summarizer.ts          # Session summary generation
+│   │   ├── calendar.ts            # Google Calendar integration
+│   │   └── telegram.ts            # Telegram notification utilities
+│   └── storage/
+│       ├── drive.ts               # Google Drive operations
+│       └── memory.ts              # Local session caching
+├── public/template/index.html      # Base form template
+├── google-apps-script-jsonp.js     # Apps Script source code
+└── docs/question/                  # Generated form files (GitHub Pages)
+```
+
+## 🔄 Critical Data Flows
+
+### Forms Platform Flow
+```
+1. Form Creation:
+   Admin → /create → POST /api/create-page → GitHub API → 
+   docs/question/<id>/config.json + index.html → GitHub Pages (60s delay)
+
+2. Form Submission:
+   User → /questions/<id> → Static HTML → JSONP → Google Apps Script → 
+   Google Sheets → Response count update → Dashboard analytics
+
+3. Form Management:
+   Dashboard → API Routes → GitHub API → Config updates → Status changes
+```
+
+### 20Q Platform Flow
+```
+1. Session Initiation:
+   User → /20q → React component → POST /api/20q/generate-question → 
+   OpenAI API → Question + rationale → UI update
+
+2. Session Progression:
+   User answer → POST /api/20q/generate-question → OpenAI API → 
+   Next question → Auto-save to Google Drive
+
+3. Session Completion:
+   AI confidence > 80% → Generate summary → Save to Drive → 
+   Show SessionSummary component
+
+4. Smart Notifications:
+   Calendar events → POST /api/20q/schedule-nudge → OpenAI analysis → 
+   Telegram notification → User engagement
+```
+
+## ⚙️ Setup Instructions
 
 ### Prerequisites
-
-- Node.js 18+ 
-- npm, yarn, or pnpm
-- GitHub account with a repository
-- Google account for Google Sheets integration
+- Node.js 18+
+- GitHub account with repository access
+- Google account for Sheets/Drive/Calendar integration
 - Vercel account for deployment
-- Custom domain (optional but recommended)
+- OpenAI API key for AI features
+- Telegram Bot token for notifications
+- Custom domain (optional)
 
-### Installation
+### Environment Variables
+Create `.env.local` with:
 
-1. Clone the repository:
-```bash
-git clone <your-repo-url>
-cd questions
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-```bash
-cp .env.example .env.local
-```
-
-Add the following environment variables to `.env.local`:
+#### **Existing Forms Platform**
 ```env
-GITHUB_TOKEN=your_github_personal_access_token
-GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec
-NEXT_PUBLIC_ADMIN_PASSWORD=your_admin_password
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/AKfycbw.../exec
+NEXT_PUBLIC_ADMIN_PASSWORD=your_secure_password
+```
+
+#### **20 Questions AI Experience**
+```env
+# OpenAI API
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+
+# Google Service Account (for Drive & Calendar)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your_service_account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_FOLDER_ID=your_drive_folder_id
+GOOGLE_CALENDAR_ID=your_calendar_id_or_primary
+
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
 ```
 
 ### GitHub Setup
-
 1. Create a GitHub Personal Access Token with `repo` permissions
-2. Create a repository for storing form files (e.g., `nbramia/questions`)
-3. Enable GitHub Pages in your repository settings
-4. Update the repository name in `src/app/api/create-page/route.ts`:
-```typescript
-const GITHUB_REPO = "your-username/your-repo-name";
-```
+2. Create a repository (e.g., `username/questions`)
+3. Enable GitHub Pages in repository settings
+4. Update `GITHUB_REPO` in API routes to your repository
 
-### Google Sheets Setup
+### Google Services Setup
 
-1. Create a new Google Sheet
-2. Deploy the Google Apps Script from `google-apps-script-jsonp.js`:
-   - Go to [Google Apps Script](https://script.google.com/)
-   - Create a new project
-   - Replace the default code with the contents of `google-apps-script-jsonp.js`
-   - Update the `spreadsheetId` in the script with your actual spreadsheet ID
-   - Deploy as a web app (set access to "Anyone")
-   - Copy the deployment URL and update `GOOGLE_SCRIPT_URL` in your environment variables
+#### **Google Sheets (Existing Forms)**
+1. Create a new Google Spreadsheet
+2. Note the spreadsheet ID from the URL
+3. Open Google Apps Script (script.google.com)
+4. Create new project and paste contents of `google-apps-script-jsonp.js`
+5. Replace `spreadsheetId` in the script (line 29) with your spreadsheet ID
+6. Deploy as web app with "Anyone" access
+7. Copy deployment URL to `GOOGLE_SCRIPT_URL`
+
+#### **Google Drive & Calendar (20Q)**
+1. **Create Google Cloud Project**
+2. **Enable APIs:**
+   - Google Drive API
+   - Google Calendar API
+3. **Create Service Account:**
+   - Download JSON credentials
+   - Extract email and private key
+4. **Set up Google Drive:**
+   - Create a folder for 20Q sessions
+   - Share folder with service account email
+   - Get folder ID from URL
+5. **Set up Google Calendar:**
+   - Share calendar with service account email
+   - Use calendar ID or 'primary'
+
+### OpenAI Setup
+1. Create OpenAI account and get API key
+2. Add key to environment variables
+3. Ensure sufficient credits for AI operations
+
+### Telegram Bot Setup
+1. **Create Bot via @BotFather**
+2. **Get bot token**
+3. **Get chat ID:**
+   - Send message to bot
+   - Visit: `https://api.telegram.org/bot<TOKEN>/getUpdates`
+   - Extract chat_id from response
 
 ### Vercel Deployment
-
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
+1. Connect GitHub repository to Vercel
+2. Add all environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
+4. Configure custom domain (optional)
 
-### Custom Domain Setup
+## 🚀 Development
 
-1. In Vercel dashboard, go to your project settings
-2. Navigate to "Domains" section
-3. Add your custom domain (e.g., `ramia.us`)
-4. Vercel will provide DNS records to configure
-5. Update your domain registrar with the provided DNS records
-
-## Usage
-
-### Creating Forms
-
-1. Navigate to `https://your-domain.com/create` and enter your admin password
-2. Fill in the form details:
-   - **Title**: The form title that will be displayed
-   - **Description**: Optional description or instructions
-   - **Expiration**: Set when the form should expire (optional)
-   - **Enforce Unique**: Prevent multiple submissions from the same IP
-
-3. Add questions by clicking "Add Question":
-   - **Text Response**: Free-form text input
-   - **Yes/No**: Simple yes/no radio buttons
-   - **Multiple Choice**: Single selection from options
-   - **Checkboxes**: Multiple selections allowed
-   - **Scale**: Numeric rating (1-5, 1-10, or 1-100)
-   - **Likert**: Pre-defined scale options
-
-4. Configure conditional logic (skip logic):
-   - Enable "Show only if..." for questions after the first
-   - Select which question to depend on
-   - Choose the condition (equals, contains, greater than, etc.)
-   - Set the value to compare against
-
-5. Click "Create Form" to deploy
-
-### Form Deployment Process
-
-When you create a form, the application:
-
-1. **Generates a unique 6-character ID** (e.g., `jK3erp`)
-2. **Creates a JSON configuration file** with form settings and questions
-3. **Deploys the form HTML template** with embedded configuration
-4. **Commits both files to GitHub** via GitHub API
-5. **GitHub Pages automatically deploys** the files (takes 1-2 minutes)
-6. **Returns a shareable URL** like `https://ramia.us/questions/jK3erp/`
-
-### Form Access
-
-Forms are accessible at: `https://your-domain.com/questions/{form-id}/`
-
-The dynamic route fetches the form data from GitHub Pages and renders it seamlessly.
-
-### Response Collection
-
-When users submit forms:
-1. Responses are sent to your Google Apps Script
-2. Data is automatically saved to Google Sheets
-3. Each form gets its own sheet tab
-4. Responses include timestamp, IP address, and user agent
-5. Duplicate submissions are prevented if enabled
-
-## Project Structure
-
+### Local Development
+```bash
+npm install
+npm run dev
 ```
-src/
-├── app/
-│   ├── dashboard/        # Admin dashboard interface
-│   ├── create/          # Form creation interface
-│   ├── api/
-│   │   ├── create-page/ # GitHub deployment API
-│   │   ├── forms/       # Form data serving API
-│   │   └── proxy/       # CORS proxy for Google Apps Script
-│   ├── questions/       # Dynamic form pages
-│   └── globals.css      # Global styles
-├── components/
-│   └── ui/              # Reusable UI components
-└── lib/
-    └── utils.ts         # Utility functions
+Access at `http://localhost:3000`
 
-public/
-└── template/
-    └── index.html       # Form template
-
-docs/
-└── question/            # Form files deployed to GitHub Pages
-    └── [form-id]/
-        ├── config.json  # Form configuration
-        └── index.html   # Form template
-
-google-apps-script-jsonp.js  # Google Apps Script for data collection
+### Building for Production
+```bash
+npm run build
+npm start
 ```
 
-## API Endpoints
+## 📊 Data Flow
 
-### POST /api/create-page
-Creates and deploys a new form to GitHub Pages.
-
-**Request Body:**
-```json
-{
-  "title": "Form Title",
-  "description": "Optional description",
-  "expiration": "24h",
-  "enforceUnique": true,
-  "questions": [
-    {
-      "id": "q1",
-      "type": "text",
-      "label": "What's your feedback?",
-      "options": []
-    }
-  ]
-}
+### Form Creation (Existing)
+```
+Admin Dashboard → Create Form → POST /api/create-page → GitHub API → 
+GitHub Pages Deploy (60s) → Form URL Available
 ```
 
-**Response:**
-```json
-{
-  "link": "https://ramia.us/questions/abc123/"
-}
+### Form Submission (Existing)
+```
+User Fills Form → JSONP to Google Apps Script → Google Sheets → 
+Response Statistics → Dashboard Analytics
 ```
 
-### GET /api/forms/[id]
-Serves form data by fetching from GitHub Pages.
-
-**Response:**
-```json
-{
-  "config": { /* form configuration */ },
-  "template": "<html>...</html>"
-}
+### 20Q Session Flow
+```
+User Starts 20Q → AI Generates Question → User Answers → 
+Session Saved → Next Question → Final Summary → Google Drive
 ```
 
-### POST /api/proxy
-Proxies requests to Google Apps Script to avoid CORS issues.
+### Smart Notifications (20Q)
+```
+Calendar Analysis → AI Decision → Telegram Notification → 
+User Engagement → Session Continuation
+```
 
-## Configuration
+## 🔌 API Routes
 
-### Environment Variables
+### Core APIs (Existing Forms)
+- `GET /api/forms` - List all forms with metadata
+- `POST /api/create-page` - Create new form and deploy to GitHub
+- `GET /api/forms/[id]` - Serve form with injected config
+- `DELETE /api/forms/[id]` - Delete form from GitHub
+- `POST /api/forms/[id]/toggle` - Enable/disable form
+- `POST /api/forms/[id]/update` - Update existing form
+- `GET /api/forms/[id]/responses` - Get response statistics
 
-- `GITHUB_TOKEN`: GitHub Personal Access Token
-- `GOOGLE_SCRIPT_URL`: Deployed Google Apps Script URL
-- `NEXT_PUBLIC_ADMIN_PASSWORD`: Password for admin access
+### 20Q AI APIs
+- `POST /api/20q/generate-question` - AI-powered question generation
+- `POST /api/20q/save-session` - Session storage to Google Drive
+- `GET /api/20q/session/[id]` - Retrieve completed sessions
+- `POST /api/20q/notify` - Send Telegram notifications
+- `POST /api/20q/schedule-nudge` - Calendar-aware notification scheduling
 
-### GitHub Repository Settings
+### Authentication
+Password-based authentication with localStorage persistence for admin functions.
 
-Update these constants in `src/app/api/create-page/route.ts`:
-- `GITHUB_REPO`: Your repository name
-- `GITHUB_BRANCH`: Branch to deploy to (usually "main")
-- `TARGET_PATH`: Directory path for form files
-
-## Deployment Architecture
-
-### Vercel (Production)
-- **Domain**: `ramia.us` (custom domain)
-- **Admin Panel**: `https://ramia.us/dashboard`
-- **Form URLs**: `https://ramia.us/questions/[form-id]/`
-- **API Routes**: Serverless functions for form creation and serving
-
-### GitHub Pages (Form Storage)
-- **Domain**: `https://nbramia.github.io/questions/`
-- **Form Files**: `https://nbramia.github.io/questions/question/[form-id]/`
-- **Automatic Deployment**: Triggered by GitHub API commits
-
-### Data Flow
-1. **Form Creation**: Vercel API → GitHub API → GitHub Pages
-2. **Form Viewing**: Vercel Dynamic Route → GitHub Pages fetch → Render
-3. **Form Submission**: Client → Google Apps Script → Google Sheets
-
-## Customization
-
-### Styling
-
-The form template uses Tailwind CSS. Modify `public/template/index.html` to change the form appearance.
+## 📋 Form Features (Existing)
 
 ### Question Types
+| Type | Input | Notes |
+|------|-------|-------|
+| Text | Textarea | Multiline text input |
+| Yes/No | Radio buttons | Simple binary choice |
+| Multiple Choice | Radio list | Single selection |
+| Checkbox | Checkbox list | Multiple selections |
+| Scale | Slider | Numeric rating (1-N) |
+| Likert | Radio list | Predefined scale options |
 
-Add new question types by:
-1. Updating the admin interface in `src/app/create/page.tsx`
-2. Adding rendering logic in the template JavaScript
-3. Updating the Google Apps Script to handle new data formats
+### Skip Logic Conditions
+- **equals** / **not_equals**: Exact value matching
+- **contains** / **not_contains**: Text substring matching
+- **includes** / **not_includes**: Array value matching (checkboxes)
+- **greater_than** / **less_than**: Numeric comparisons
 
-### Data Storage
+### Form Options
+- **Expiration**: Time-based or manual disable
+- **Unique Submissions**: IP-based duplicate prevention
+- **Dark Mode**: Per-form dark mode toggle
+- **Description**: Optional form description text
 
-The Google Apps Script can be modified to:
-- Send email notifications
-- Integrate with other Google services
-- Export data to different formats
-- Add data validation rules
+## 🤖 20Q AI Features
 
-## Troubleshooting
+### Question Generation
+- **Contextual Awareness**: Each question builds on previous answers
+- **Adaptive Types**: AI chooses optimal input type (text/likert/choice)
+- **Confidence Tracking**: Monitors understanding level (0-100%)
+- **Rationale Display**: Shows why each question is being asked
 
-### Common Issues
+### Session Management
+- **Auto-save**: Every 30 seconds to prevent data loss
+- **Resume Capability**: Continue interrupted sessions
+- **Export Options**: JSON and human-readable summaries
+- **Privacy Focused**: No personal data beyond session content
 
-1. **GitHub API Errors**: Check your GitHub token permissions
-2. **Google Sheets Not Updating**: Verify the spreadsheet ID in the Apps Script
-3. **CORS Errors**: Ensure the Google Apps Script is deployed as a web app
-4. **Forms Not Loading**: Check that GitHub Pages is enabled for your repository
-5. **404 Errors on Forms**: Wait 1-2 minutes for GitHub Pages deployment
-6. **Custom Domain Issues**: Verify DNS records are configured correctly
+### Smart Notifications
+- **Calendar Integration**: Analyzes upcoming events
+- **AI Decision Making**: Determines optimal notification timing
+- **Contextual Messages**: Personalized based on goal progress
+- **Direct Links**: One-click access to continue sessions
 
-### Debug Mode
+## 🏗️ Deployment Architecture
 
-Enable console logging by adding `console.log` statements in the template JavaScript or checking browser developer tools.
+### Production Flow
+1. **Code Changes**: Push to main branch
+2. **Vercel Build**: Automatic Next.js deployment
+3. **Form Changes**: API routes update GitHub repository
+4. **GitHub Pages**: Automatic static file deployment (~60 seconds)
+5. **20Q Sessions**: Real-time Google Drive storage
+6. **AI Operations**: OpenAI API calls for question generation
 
-### Deployment Timing
+### File Storage
+- **Form Configs**: `docs/question/<formId>/config.json`
+- **Form Templates**: `docs/question/<formId>/index.html`
+- **Response Data**: Google Sheets (one sheet per form)
+- **20Q Sessions**: Google Drive (JSON + text summaries)
 
-- **Vercel**: Instant deployment
-- **GitHub Pages**: 1-2 minute delay after commit
-- **Form Availability**: Forms may take 1-2 minutes to become accessible
+## 🔧 Troubleshooting
 
-## Contributing
+### Common Issues (Existing Forms)
+| Problem | Solution |
+|---------|----------|
+| Form 404 after creation | Wait 1-2 minutes for GitHub Pages deployment |
+| Forms showing 0 responses | Check Google Apps Script logs and sheet naming |
+| Enable/Disable stuck | Check Vercel function logs for API errors |
+| Form not loading | Verify GitHub Pages is enabled and files exist |
+| CORS errors | Ensure Google Apps Script is deployed as web app |
+
+### Common Issues (20Q)
+| Problem | Solution |
+|---------|----------|
+| AI not generating questions | Check OpenAI API key and credits |
+| Sessions not saving | Verify Google Drive folder permissions |
+| Notifications not sending | Check Telegram bot token and chat ID |
+| Calendar integration failing | Ensure Google Calendar API is enabled |
+| Session loading errors | Check Google Drive file permissions |
+
+### Debug Locations
+- **Browser Console**: Form loading and submission errors
+- **Vercel Functions**: API route errors and external API issues
+- **Google Apps Script**: Execution logs and runtime errors (forms)
+- **Google Drive**: Session file access and permissions (20Q)
+- **OpenAI API**: Question generation and analysis logs
+- **Telegram Bot**: Notification delivery status
+
+## 🔑 Key Implementation Details
+
+### Forms Platform Critical Files
+- `src/app/create/page.tsx` - Form builder with drag-and-drop
+- `src/app/dashboard/page.tsx` - Admin dashboard
+- `src/app/questions/[id]/page.tsx` - Dynamic form viewer
+- `src/app/api/create-page/route.ts` - Form creation and GitHub deployment
+- `src/app/api/forms/route.ts` - Form listing and management
+- `public/template/index.html` - Base form template
+- `google-apps-script-jsonp.js` - Response processing script
+
+### 20Q Platform Critical Files
+- `src/app/20q/page.tsx` - Main 20Q interface
+- `src/app/20q/session/[id]/page.tsx` - Session review
+- `src/components/20q/QuestionCard.tsx` - Question interface
+- `src/lib/20q/agent.ts` - AI interaction logic
+- `src/lib/20q/prompts.ts` - LLM prompt templates
+- `src/lib/storage/drive.ts` - Google Drive operations
+- `src/app/api/20q/generate-question/route.ts` - AI question generation
+
+### Shared Infrastructure
+- `src/components/ui/` - Reusable UI components
+- `src/app/layout.tsx` - Root layout with dark mode
+- `src/app/page.tsx` - Landing page with authentication
+- `src/lib/dark-mode.tsx` - Dark mode provider
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+3. Make changes with appropriate tests
+4. Submit a pull request with detailed description
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review the Google Apps Script documentation
-3. Open an issue on GitHub
-4. Check the Next.js documentation for framework-specific questions
+MIT License - see LICENSE file for details.
