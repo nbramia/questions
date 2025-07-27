@@ -27,7 +27,7 @@ interface AgentResponse {
 }
 
 export async function generateNextTurn(
-  session: SessionState, 
+  session: SessionState,
   currentTurn: number
 ): Promise<AgentResponse> {
   try {
@@ -74,7 +74,7 @@ export async function generateNextTurn(
     let agentResponse: AgentResponse;
     try {
       agentResponse = JSON.parse(content);
-    } catch (error) {
+    } catch {
       console.error('Failed to parse OpenAI response:', content);
       throw new Error('Invalid response format from AI');
     }
@@ -106,7 +106,7 @@ export async function analyzeSession(session: SessionState): Promise<{
   confidence: number;
 }> {
   try {
-    const turns = session.turns.map((turn, index) => 
+    const turns = session.turns.map((turn, index) =>
       `Q${index + 1}: ${turn.question}\nA: ${turn.answer}`
     ).join('\n\n');
 
@@ -164,7 +164,7 @@ Respond with JSON:
     }
 
     const analysis = JSON.parse(content);
-    
+
     return {
       insights: analysis.insights || [],
       recommendations: analysis.recommendations || [],

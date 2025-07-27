@@ -1,14 +1,12 @@
 import { google } from 'googleapis';
 import { determineAccountContext } from '../storage/drive';
 
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  description?: string;
-  start: string;
-  end: string;
-  location?: string;
-  attendees?: string[];
+interface QuestionTurn {
+  question: string;
+  answer: string;
+  rationale?: string;
+  confidenceAfter?: number;
+  type: 'text' | 'likert' | 'choice';
 }
 
 interface StructuredEvent {
@@ -158,7 +156,24 @@ export function formatCalendarForPrompt(events: StructuredEvent[]): string {
 }
 
 // Get calendar events for a specific session context
-export async function getCalendarEventsForSession(session: any): Promise<StructuredEvent[]> {
-  const accountContext = determineAccountContext(session);
+export async function getCalendarEventsForSession(session: { goal: string; turns?: Array<{ answer: string }>; accountContext?: 'personal' | 'work' }): Promise<StructuredEvent[]> {
+  // Create a minimal session object that matches the expected interface
+  const sessionData = {
+    id: 'temp',
+    createdAt: new Date().toISOString(),
+    goal: session.goal,
+    goalConfirmed: false,
+    turns: (session.turns || []).map(turn => ({
+      question: 'Previous question',
+      answer: turn.answer,
+      type: 'text' as const
+    })),
+    status: 'in-progress' as const,
+    userStopped: false,
+    savedAt: new Date().toISOString(),
+    accountContext: session.accountContext
+  };
+  
+  const accountContext = determineAccountContext(sessionData);
   return await getUpcomingEvents(3, accountContext);
 }

@@ -94,7 +94,7 @@ export async function POST(req: Request) {
     let response: GenerateQuestionResponse;
     try {
       response = JSON.parse(content);
-    } catch (error) {
+    } catch {
       console.error('Failed to parse OpenAI response:', content);
       return NextResponse.json(
         { error: 'Invalid response format from AI' },

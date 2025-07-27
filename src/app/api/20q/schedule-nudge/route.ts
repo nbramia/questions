@@ -4,11 +4,36 @@ import { buildCalendarPrompt } from '@/lib/20q/prompts';
 import { sendTelegramMessage } from '@/lib/20q/telegram';
 import { determineAccountContext } from '@/lib/storage/drive';
 
+interface QuestionTurn {
+  question: string;
+  answer: string;
+  rationale?: string;
+  confidenceAfter?: number;
+  type: 'text' | 'likert' | 'choice';
+}
+
+interface SessionData {
+  id: string;
+  createdAt: string;
+  goal: string;
+  goalConfirmed: boolean;
+  turns: QuestionTurn[];
+  finalSummary?: string;
+  status: 'in-progress' | 'completed';
+  userStopped?: boolean;
+  savedAt: string;
+  accountContext?: 'personal' | 'work';
+}
+
 interface NudgeRequest {
   goal: string;
   sessionId?: string;
   customMessage?: string;
-  sessionData?: any; // Full session data for context analysis
+  sessionData?: {
+    goal: string;
+    turns?: Array<{ answer: string }>;
+    accountContext?: 'personal' | 'work';
+  };
 }
 
 interface NudgeDecision {
@@ -22,7 +47,7 @@ interface NudgeDecision {
 export async function POST(req: Request) {
   try {
     const body: NudgeRequest = await req.json();
-    const { goal, sessionId, customMessage, sessionData } = body;
+    const { goal, customMessage, sessionData } = body;
 
     if (!goal) {
       return NextResponse.json(
@@ -39,7 +64,23 @@ export async function POST(req: Request) {
     // Determine which account context the session belongs to for storage/notification purposes
     let accountContext: 'personal' | 'work' = 'personal';
     if (sessionData) {
-      accountContext = determineAccountContext(sessionData);
+      // Create a proper session object that matches the expected interface
+      const fullSessionData: SessionData = {
+        id: 'temp',
+        createdAt: new Date().toISOString(),
+        goal: sessionData.goal,
+        goalConfirmed: false,
+        turns: (sessionData.turns || []).map(turn => ({
+          question: 'Previous question',
+          answer: turn.answer,
+          type: 'text' as const
+        })),
+        status: 'in-progress',
+        userStopped: false,
+        savedAt: new Date().toISOString(),
+        accountContext: sessionData.accountContext
+      };
+      accountContext = determineAccountContext(fullSessionData);
     }
 
     // Build prompt for LLM decision with full calendar view
@@ -91,7 +132,7 @@ export async function POST(req: Request) {
     let decision: NudgeDecision;
     try {
       decision = JSON.parse(content);
-    } catch (error) {
+    } catch {
       console.error('Failed to parse AI response:', content);
       return NextResponse.json(
         { error: 'Invalid response format from AI' },

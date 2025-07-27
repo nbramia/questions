@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { WhyThisQuestion } from './WhyThisQuestion';
 
 interface QuestionTurn {
@@ -56,7 +55,7 @@ export function QuestionCard({ turn, turnIndex, isReadOnly, onSubmit, isActive }
             autoFocus={isActive}
           />
         );
-      
+
       case 'likert':
         return (
           <div className="space-y-4">
@@ -80,7 +79,7 @@ export function QuestionCard({ turn, turnIndex, isReadOnly, onSubmit, isActive }
             </div>
           </div>
         );
-      
+
       case 'choice':
         return (
           <div className="space-y-2">
@@ -97,7 +96,7 @@ export function QuestionCard({ turn, turnIndex, isReadOnly, onSubmit, isActive }
             ))}
           </div>
         );
-      
+
       default:
         return (
           <Input
@@ -134,18 +133,18 @@ export function QuestionCard({ turn, turnIndex, isReadOnly, onSubmit, isActive }
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {showRationale && turn.rationale && (
           <WhyThisQuestion rationale={turn.rationale} />
         )}
-        
+
         <div className="space-y-4">
           {renderInput()}
-          
+
           {isActive && !isReadOnly && (
             <div className="flex justify-end">
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={!answer.trim()}
                 className="px-6"
@@ -155,7 +154,7 @@ export function QuestionCard({ turn, turnIndex, isReadOnly, onSubmit, isActive }
             </div>
           )}
         </div>
-        
+
         {!isActive && turn.answer && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Your answer:</p>
