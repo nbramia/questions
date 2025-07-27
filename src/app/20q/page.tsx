@@ -156,11 +156,23 @@ export default function TwentyQuestionsPage() {
     // Check if we've reached the 20 question limit
     if (updatedSession.turns.length >= 20) {
       console.log('Reached 20 question limit, completing session');
-      setSession(prev => ({
-        ...prev,
-        status: 'completed',
+      const completedSession = {
+        ...updatedSession,
+        status: 'completed' as const,
         finalSummary: 'Session completed after 20 questions'
-      }));
+      };
+      setSession(completedSession);
+      
+      // Save the completed session to Google Drive
+      try {
+        await fetch('/api/20q/save-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(completedSession)
+        });
+      } catch (err) {
+        console.error('Failed to save session:', err);
+      }
       return;
     }
 
@@ -200,32 +212,68 @@ export default function TwentyQuestionsPage() {
 
           if (summaryResponse.ok) {
             const summaryData = await summaryResponse.json();
-            setSession(prev => ({
-              ...prev,
-              status: 'completed',
+            const completedSession = {
+              ...updatedSession,
+              status: 'completed' as const,
               goalConfirmed: true,
               goal: summaryData.goal,
               finalSummary: summaryData.summary
-            }));
+            };
+            setSession(completedSession);
+            
+            // Save the completed session to Google Drive
+            try {
+              await fetch('/api/20q/save-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(completedSession)
+              });
+            } catch (err) {
+              console.error('Failed to save session:', err);
+            }
           } else {
             // Fallback if summary generation fails
-            setSession(prev => ({
-              ...prev,
-              status: 'completed',
+            const completedSession = {
+              ...updatedSession,
+              status: 'completed' as const,
               goalConfirmed: true,
               goal: 'Goal understanding achieved',
               finalSummary: 'Session completed with high confidence'
-            }));
+            };
+            setSession(completedSession);
+            
+            // Save the completed session to Google Drive
+            try {
+              await fetch('/api/20q/save-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(completedSession)
+              });
+            } catch (err) {
+              console.error('Failed to save session:', err);
+            }
           }
         } catch (err) {
           console.error('Failed to generate goal summary:', err);
-          setSession(prev => ({
-            ...prev,
-            status: 'completed',
+          const completedSession = {
+            ...updatedSession,
+            status: 'completed' as const,
             goalConfirmed: true,
             goal: 'Goal understanding achieved',
             finalSummary: 'Session completed with high confidence'
-          }));
+          };
+          setSession(completedSession);
+          
+          // Save the completed session to Google Drive
+          try {
+            await fetch('/api/20q/save-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(completedSession)
+            });
+          } catch (err) {
+            console.error('Failed to save session:', err);
+          }
         }
       } else {
         // Add the new question turn
@@ -350,32 +398,68 @@ export default function TwentyQuestionsPage() {
 
                   if (summaryResponse.ok) {
                     const summaryData = await summaryResponse.json();
-                    setSession(prev => ({
-                      ...prev,
-                      status: 'completed',
+                    const completedSession = {
+                      ...session,
+                      status: 'completed' as const,
                       goalConfirmed: true,
                       goal: summaryData.goal,
                       finalSummary: summaryData.summary
-                    }));
+                    };
+                    setSession(completedSession);
+                    
+                    // Save the completed session to Google Drive
+                    try {
+                      await fetch('/api/20q/save-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(completedSession)
+                      });
+                    } catch (err) {
+                      console.error('Failed to save session:', err);
+                    }
                   } else {
                     // Fallback if summary generation fails
-                    setSession(prev => ({
-                      ...prev,
-                      status: 'completed',
+                    const completedSession = {
+                      ...session,
+                      status: 'completed' as const,
                       goalConfirmed: true,
                       goal: 'Goal understanding achieved',
                       finalSummary: 'Session completed early by user'
-                    }));
+                    };
+                    setSession(completedSession);
+                    
+                    // Save the completed session to Google Drive
+                    try {
+                      await fetch('/api/20q/save-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(completedSession)
+                      });
+                    } catch (err) {
+                      console.error('Failed to save session:', err);
+                    }
                   }
                 } catch (err) {
                   console.error('Failed to generate goal summary:', err);
-                  setSession(prev => ({
-                    ...prev,
-                    status: 'completed',
+                  const completedSession = {
+                    ...session,
+                    status: 'completed' as const,
                     goalConfirmed: true,
                     goal: 'Goal understanding achieved',
                     finalSummary: 'Session completed early by user'
-                  }));
+                  };
+                  setSession(completedSession);
+                  
+                  // Save the completed session to Google Drive
+                  try {
+                    await fetch('/api/20q/save-session', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(completedSession)
+                    });
+                  } catch (err) {
+                    console.error('Failed to save session:', err);
+                  }
                 } finally {
                   setLoading(false);
                 }

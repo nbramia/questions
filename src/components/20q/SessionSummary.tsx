@@ -33,10 +33,8 @@ export function SessionSummary({ session }: SessionSummaryProps) {
     session.turns.filter(turn => turn.confidenceAfter !== undefined).length;
 
   const handleStartExecution = () => {
-    // TODO: Navigate to goal execution phase
-    // This would be a separate experience where an agent works on the goal
-    console.log('Starting goal execution for:', session.goal);
-    alert('Goal execution phase would start here. This is where an agent would work on achieving your goal.');
+    // Navigate to the goal execution page
+    window.location.href = `/20q/execute/${session.id}`;
   };
 
   return (

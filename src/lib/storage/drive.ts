@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { Readable } from 'node:stream';
 
 interface QuestionTurn {
   question: string;
@@ -97,38 +98,48 @@ export function determineAccountContext(session: SessionData): 'personal' | 'wor
 
 export async function writeSessionToDrive(session: SessionData): Promise<boolean> {
   try {
-    // Determine which account to use
-    const accountContext = session.accountContext || determineAccountContext(session);
-    const accountConfig = getAccountConfig(accountContext);
+    console.log('writeSessionToDrive called with session ID:', session.id);
     
-    const drive = getDriveClient(accountConfig);
-
-    // Create JSON file with full session data
-    const sessionWithContext = {
-      ...session,
-      accountContext // Store which account was used
-    };
-
-    const jsonContent = JSON.stringify(sessionWithContext, null, 2);
-    const jsonMetadata = {
-      name: `20q-session-${session.id}.json`,
-      parents: [accountConfig.driveFolderId],
-      mimeType: 'application/json',
-    };
-
-    const jsonBuffer = Buffer.from(jsonContent, 'utf-8');
-    const jsonMedia = {
-      mimeType: 'application/json',
-      body: jsonBuffer,
-    };
-
-    await drive.files.create({
-      requestBody: jsonMetadata,
-      media: jsonMedia,
+    const accountContext = session.accountContext || determineAccountContext(session);
+    console.log('Determined account context:', accountContext);
+    
+    const accountConfig = getAccountConfig(accountContext);
+    console.log('Account config retrieved:', {
+      email: accountConfig.serviceAccountEmail ? 'Set' : 'Not set',
+      privateKey: accountConfig.privateKey ? 'Set' : 'Not set',
+      driveFolderId: accountConfig.driveFolderId ? 'Set' : 'Not set',
+      calendarId: accountConfig.calendarId ? 'Set' : 'Not set'
     });
 
-    // Create text file with summary
+    const drive = getDriveClient(accountConfig);
+    console.log('Drive client created successfully');
+
+    // Create the JSON file using simple media upload (no multipart)
+    const jsonContent = JSON.stringify(session, null, 2);
+    const jsonFileName = `20q-session-${session.id}.json`;
+
+    console.log('Creating JSON file in Google Drive...');
+    const jsonFile = await drive.files.create({
+      media: {
+        mimeType: 'application/json',
+        body: jsonContent, // Plain string - no .pipe needed
+      },
+      fields: 'id',
+    });
+    console.log('JSON file created successfully:', jsonFile.data.id);
+
+    // Update the file with metadata after creation
+    await drive.files.update({
+      fileId: jsonFile.data.id!,
+      requestBody: {
+        name: jsonFileName,
+        parents: [accountConfig.driveFolderId],
+      },
+    });
+
+    // Create the summary text file if summary exists
     if (session.finalSummary) {
+      console.log('Creating summary text file...');
       const summaryContent = `20 Questions Session Summary\n\n` +
         `Session ID: ${session.id}\n` +
         `Created: ${session.createdAt}\n` +
@@ -140,24 +151,28 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
           `${index + 1}. Q: ${turn.question}\n   A: ${turn.answer}`
         ).join('\n\n');
 
-      const summaryMetadata = {
-        name: `20q-session-${session.id}-summary.txt`,
-        parents: [accountConfig.driveFolderId],
-        mimeType: 'text/plain',
-      };
+      const summaryFileName = `20q-session-${session.id}-summary.txt`;
 
-      const summaryBuffer = Buffer.from(summaryContent, 'utf-8');
-      const summaryMedia = {
-        mimeType: 'text/plain',
-        body: summaryBuffer,
-      };
+      const summaryFile = await drive.files.create({
+        media: {
+          mimeType: 'text/plain',
+          body: summaryContent, // Plain string - no .pipe needed
+        },
+        fields: 'id',
+      });
+      console.log('Summary file created successfully:', summaryFile.data.id);
 
-      await drive.files.create({
-        requestBody: summaryMetadata,
-        media: summaryMedia,
+      // Update the summary file with metadata after creation
+      await drive.files.update({
+        fileId: summaryFile.data.id!,
+        requestBody: {
+          name: summaryFileName,
+          parents: [accountConfig.driveFolderId],
+        },
       });
     }
 
+    console.log('writeSessionToDrive completed successfully');
     return true;
   } catch (error) {
     console.error('Error writing to Google Drive:', error);

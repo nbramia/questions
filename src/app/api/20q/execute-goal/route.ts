@@ -1,0 +1,120 @@
+import { NextResponse } from 'next/server';
+
+interface ExecutionMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+interface ExecuteGoalRequest {
+  sessionId: string;
+  goal: string;
+  context?: string;
+  conversation: ExecutionMessage[];
+  userMessage: string;
+}
+
+interface ExecuteGoalResponse {
+  response: string;
+}
+
+export async function POST(req: Request) {
+  try {
+    const body: ExecuteGoalRequest = await req.json();
+    const { sessionId, goal, context, conversation, userMessage } = body;
+
+    // Validate request
+    if (!sessionId || !goal || !userMessage) {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
+    // Build the conversation history for the AI
+    const conversationHistory = conversation
+      .filter(msg => msg.id !== 'goal-context') // Exclude the initial context message
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join('\n');
+
+    // Create the prompt for goal execution
+    const prompt = `You are an AI agent working to execute a specific goal that was established through a 20 Questions session.
+
+GOAL TO EXECUTE:
+${goal}
+
+CONTEXT FROM 20Q SESSION:
+${context || 'No additional context provided.'}
+
+CONVERSATION HISTORY:
+${conversationHistory}
+
+USER'S LATEST MESSAGE:
+${userMessage}
+
+INSTRUCTIONS:
+- You are now in the EXECUTION phase - the goal has been established and you need to work on it
+- Be proactive and helpful in advancing toward the goal
+- Ask clarifying questions if needed
+- Suggest concrete next steps
+- Be encouraging and supportive
+- Focus on making progress toward the goal
+- If you need to contact someone or schedule something, mention that you can send a Telegram notification
+
+Respond in a helpful, actionable way that moves the goal forward.`;
+
+    // Call OpenAI API
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI agent that helps execute goals established through 20 Questions sessions. Be proactive, helpful, and focused on making progress toward the goal.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      console.error('OpenAI API error:', await openaiResponse.text());
+      return NextResponse.json(
+        { error: 'Failed to get response from AI' },
+        { status: 500 }
+      );
+    }
+
+    const openaiData = await openaiResponse.json();
+    const content = openaiData.choices[0]?.message?.content;
+
+    if (!content) {
+      return NextResponse.json(
+        { error: 'No response from OpenAI' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      response: content
+    });
+
+  } catch (error) {
+    console.error('Error in execute-goal:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+} 
