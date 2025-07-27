@@ -466,7 +466,7 @@ export default function TwentyQuestionsPage() {
               }}
               className="text-gray-600 hover:text-gray-800"
             >
-              I'm satisfied with my goal - Stop Early
+              I&apos;m satisfied with my goal - Stop Early
             </Button>
           </div>
         )}

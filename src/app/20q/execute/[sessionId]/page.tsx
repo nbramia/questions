@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GoalExecution } from '@/components/20q/GoalExecution';
 
