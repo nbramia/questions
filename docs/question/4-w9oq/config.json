@@ -1,0 +1,63 @@
+{
+  "id": "4-w9oq",
+  "title": "How was your day?",
+  "description": "descripty",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "yesno",
+      "label": "Yes or no? ",
+      "options": []
+    },
+    {
+      "id": "q1753577988178",
+      "type": "text",
+      "label": "Do you? ",
+      "options": [],
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1",
+        "condition": "equals",
+        "value": "Yes"
+      }
+    },
+    {
+      "id": "q1753578005714",
+      "type": "checkbox",
+      "label": "What do you like? ",
+      "options": [
+        "a",
+        "b",
+        "c"
+      ],
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1753577988178",
+        "condition": "contains",
+        "value": "yes"
+      }
+    },
+    {
+      "id": "q1753578038607",
+      "type": "likert",
+      "label": "How much? ",
+      "options": [
+        "Strongly agreeeeee",
+        "Somewhat agree",
+        "Neither agree nor disagree",
+        "Somewhat disagree",
+        "Strongly disagree"
+      ],
+      "skipLogic": {
+        "enabled": true,
+        "dependsOn": "q1753578005714",
+        "condition": "equals",
+        "value": "a"
+      }
+    }
+  ],
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycby9MPpkhpMS3zgPjRYueONpnZeXQNmm3Fa2mpc9-FuTrhkcBUHKGdO7TL2S9mhST5nAzQ/exec",
+  "expires_at": "2025-07-27T01:11:54.059Z",
+  "darkMode": false
+}
