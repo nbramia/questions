@@ -31,10 +31,30 @@ interface GoogleAccountConfig {
 
 // Initialize Google Drive API with specific account
 function getDriveClient(accountConfig: GoogleAccountConfig) {
+  console.log('Private key format check:', {
+    length: accountConfig.privateKey.length,
+    startsWith: accountConfig.privateKey.substring(0, 50),
+    endsWith: accountConfig.privateKey.substring(accountConfig.privateKey.length - 50),
+    containsNewlines: accountConfig.privateKey.includes('\n'),
+    containsBackslashN: accountConfig.privateKey.includes('\\n')
+  });
+
+  const formattedPrivateKey = accountConfig.privateKey
+    .replace(/\\n/g, '\n')  // Replace literal \n with actual newlines
+    .replace(/"/g, '')      // Remove any quotes
+    .trim();                 // Remove extra whitespace
+
+  console.log('Formatted private key:', {
+    length: formattedPrivateKey.length,
+    startsWith: formattedPrivateKey.substring(0, 50),
+    endsWith: formattedPrivateKey.substring(formattedPrivateKey.length - 50),
+    containsNewlines: formattedPrivateKey.includes('\n')
+  });
+
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: accountConfig.serviceAccountEmail,
-      private_key: accountConfig.privateKey.replace(/\\n/g, '\n'),
+      private_key: formattedPrivateKey,
     },
     scopes: ['https://www.googleapis.com/auth/drive.file'],
   });
@@ -225,7 +245,10 @@ export async function getCalendarEvents(accountContext: 'personal' | 'work') {
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: accountConfig.serviceAccountEmail,
-      private_key: accountConfig.privateKey.replace(/\\n/g, '\n'),
+      private_key: accountConfig.privateKey
+        .replace(/\\n/g, '\n')  // Replace literal \n with actual newlines
+        .replace(/"/g, '')      // Remove any quotes
+        .trim(),                 // Remove extra whitespace
     },
     scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
   });
