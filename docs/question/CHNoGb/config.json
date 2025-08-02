@@ -1,0 +1,53 @@
+{
+  "id": "CHNoGb",
+  "title": "analytics test",
+  "description": "",
+  "enforceUnique": false,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "yesno",
+      "label": "hkbjb",
+      "options": []
+    },
+    {
+      "id": "q1754106322899",
+      "type": "text",
+      "label": "jhbhjb",
+      "options": []
+    },
+    {
+      "id": "q1754106324520",
+      "type": "mcq",
+      "label": "hgvhgv",
+      "options": []
+    },
+    {
+      "id": "q1754106324677",
+      "type": "checkbox",
+      "label": "jhbhjb",
+      "options": []
+    },
+    {
+      "id": "q1754106324821",
+      "type": "scale",
+      "label": "yyutfv",
+      "options": [],
+      "scaleRange": 100
+    },
+    {
+      "id": "q1754106325114",
+      "type": "likert",
+      "label": "kl;mlkmn",
+      "options": [
+        "Strongly agree",
+        "Somewhat agree",
+        "Neither agree nor disagree",
+        "Somewhat disagree",
+        "Strongly disagree"
+      ]
+    }
+  ],
+  "googleScriptUrl": "https://script.google.com/macros/s/AKfycbxLbLITMTd039lvNXhhk1mnr7R2lUhbGiyH1mCLL5GQ4f3b41EklV9yoTpOzp3JvxMBTg/exec",
+  "darkMode": false
+}
