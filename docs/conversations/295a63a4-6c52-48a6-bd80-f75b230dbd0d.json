@@ -1,0 +1,27 @@
+{
+  "sessionId": "295a63a4-6c52-48a6-bd80-f75b230dbd0d",
+  "goal": "Test the user's daughter on her understanding of middle school geometry, identify her strengths and weaknesses, develop a comprehensive training plan, and assist her in learning the necessary geometry concepts.",
+  "context": "The user's daughter is studying middle school geometry. The task requires assessing her current knowledge, identifying areas of strength and weakness, creating a tailored training plan, and facilitating her learning process. The specific topics of geometry to be covered are not mentioned and may need to be clarified.",
+  "messages": [
+    {
+      "id": "goal-context",
+      "role": "assistant",
+      "content": "I'm here to help you work on your goal. Based on the 20 Questions session, I understand that you want to:\n\n**Goal:** Test the user's daughter on her understanding of middle school geometry, identify her strengths and weaknesses, develop a comprehensive training plan, and assist her in learning the necessary geometry concepts.\n\n**Context:** The user's daughter is studying middle school geometry. The task requires assessing her current knowledge, identifying areas of strength and weakness, creating a tailored training plan, and facilitating her learning process. The specific topics of geometry to be covered are not mentioned and may need to be clarified.\n\nI'm ready to help you execute this goal. What would you like to start with?",
+      "timestamp": "2025-08-02T02:36:57.076Z"
+    },
+    {
+      "id": "1754102294886",
+      "role": "user",
+      "content": "I'm the daughter, you tell me.",
+      "timestamp": "2025-08-02T02:38:14.886Z"
+    },
+    {
+      "id": "1754102296497",
+      "role": "assistant",
+      "content": "Let's begin with a basic geometry question: What is the sum of the interior angles of a triangle?",
+      "timestamp": "2025-08-02T02:38:16.496Z"
+    }
+  ],
+  "createdAt": "2025-08-02T02:36:38.732Z",
+  "updatedAt": "2025-08-02T02:38:16.496Z"
+}
