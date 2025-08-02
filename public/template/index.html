@@ -17,6 +17,19 @@
       .form-checkbox {
         @apply h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500;
       }
+      
+      /* Rephrase button styles */
+      .rephrase-btn {
+        @apply px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+      }
+      
+      .refresh-btn {
+        @apply px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-2;
+      }
+      
+      .undo-btn {
+        @apply px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-2;
+      }
     </style>
   </head>
   <body class="bg-gray-50 dark:bg-gray-900 min-h-screen px-4 sm:px-8 pt-12 pb-24">
@@ -228,11 +241,198 @@
           questionContent.appendChild(label);
 
           if (q.type === "text") {
+            // Create container for text input and buttons
+            const textContainer = document.createElement("div");
+            textContainer.className = "space-y-3";
+            
+            // Create textarea
             const input = document.createElement("textarea");
             input.name = q.id || `q${i}`;
             input.className = "w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 min-h-[120px] resize-vertical text-base";
             input.placeholder = "Enter your response...";
-            questionContent.appendChild(input);
+            
+            // Store original text for undo functionality
+            let originalText = "";
+            let isRephrasing = false;
+            
+            // Create button container
+            const buttonContainer = document.createElement("div");
+            buttonContainer.className = "flex gap-2 flex-wrap";
+            
+            // Rephrase button
+            const rephraseBtn = document.createElement("button");
+            rephraseBtn.type = "button";
+            rephraseBtn.className = "rephrase-btn";
+            rephraseBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Rephrase (extra anonymity)
+            `;
+            
+            // Refresh button (hidden initially)
+            const refreshBtn = document.createElement("button");
+            refreshBtn.type = "button";
+            refreshBtn.className = "refresh-btn hidden";
+            refreshBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Try Again
+            `;
+            
+            // Undo button (hidden initially)
+            const undoBtn = document.createElement("button");
+            undoBtn.type = "button";
+            undoBtn.className = "undo-btn hidden";
+            undoBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+              Undo
+            `;
+            
+            // Loading indicator
+            const loadingIndicator = document.createElement("div");
+            loadingIndicator.className = "px-4 py-2 text-gray-600 text-sm font-medium rounded-md bg-gray-100 hidden";
+            loadingIndicator.innerHTML = `
+              <div class="flex items-center gap-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                Rephrasing...
+              </div>
+            `;
+            
+            // Rephrase functionality
+            rephraseBtn.addEventListener('click', async function() {
+              const text = input.value.trim();
+              if (!text) {
+                alert('Please enter some text to rephrase.');
+                return;
+              }
+              
+              // Store original text if this is the first rephrase
+              if (!originalText) {
+                originalText = text;
+              }
+              
+              // Show loading state
+              isRephrasing = true;
+              rephraseBtn.disabled = true;
+              refreshBtn.classList.add('hidden');
+              undoBtn.classList.add('hidden');
+              loadingIndicator.classList.remove('hidden');
+              
+              try {
+                const response = await fetch('/api/rephrase-text', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ text }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to rephrase text');
+                }
+                
+                const data = await response.json();
+                input.value = data.rephrasedText;
+                
+                // Show refresh and undo buttons
+                refreshBtn.classList.remove('hidden');
+                undoBtn.classList.remove('hidden');
+                
+              } catch (error) {
+                console.error('Error rephrasing text:', error);
+                
+                // More specific error messages
+                let errorMessage = 'Failed to rephrase text. Please try again.';
+                if (error.message.includes('Failed to fetch')) {
+                  errorMessage = 'Network error. Please check your connection and try again.';
+                } else if (error.message.includes('Failed to rephrase text')) {
+                  errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
+                }
+                
+                alert(errorMessage);
+              } finally {
+                // Hide loading state
+                isRephrasing = false;
+                rephraseBtn.disabled = false;
+                loadingIndicator.classList.add('hidden');
+              }
+            });
+            
+            // Refresh functionality
+            refreshBtn.addEventListener('click', async function() {
+              const text = originalText || input.value.trim();
+              if (!text) {
+                alert('No text to rephrase.');
+                return;
+              }
+              
+              // Show loading state
+              isRephrasing = true;
+              rephraseBtn.disabled = true;
+              refreshBtn.disabled = true;
+              undoBtn.disabled = true;
+              loadingIndicator.classList.remove('hidden');
+              
+              try {
+                const response = await fetch('/api/rephrase-text', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ text }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to rephrase text');
+                }
+                
+                const data = await response.json();
+                input.value = data.rephrasedText;
+                
+              } catch (error) {
+                console.error('Error rephrasing text:', error);
+                
+                // More specific error messages
+                let errorMessage = 'Failed to rephrase text. Please try again.';
+                if (error.message.includes('Failed to fetch')) {
+                  errorMessage = 'Network error. Please check your connection and try again.';
+                } else if (error.message.includes('Failed to rephrase text')) {
+                  errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
+                }
+                
+                alert(errorMessage);
+              } finally {
+                // Hide loading state
+                isRephrasing = false;
+                rephraseBtn.disabled = false;
+                refreshBtn.disabled = false;
+                undoBtn.disabled = false;
+                loadingIndicator.classList.add('hidden');
+              }
+            });
+            
+            // Undo functionality
+            undoBtn.addEventListener('click', function() {
+              if (originalText) {
+                input.value = originalText;
+                refreshBtn.classList.add('hidden');
+                undoBtn.classList.add('hidden');
+              }
+            });
+            
+            // Add elements to container
+            textContainer.appendChild(input);
+            buttonContainer.appendChild(rephraseBtn);
+            buttonContainer.appendChild(refreshBtn);
+            buttonContainer.appendChild(undoBtn);
+            buttonContainer.appendChild(loadingIndicator);
+            textContainer.appendChild(buttonContainer);
+            
+            questionContent.appendChild(textContainer);
           } else if (q.type === "yesno") {
             const optionsContainer = document.createElement("div");
             optionsContainer.className = "space-y-3";
