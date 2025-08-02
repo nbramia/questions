@@ -144,6 +144,8 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
         body: jsonContent, // Plain string - no .pipe needed
       },
       uploadType: 'media', // Force simple upload
+      supportsAllDrives: true, // Enable shared drives
+      includeItemsFromAllDrives: true, // Include shared drive items
     };
     console.log('Google Drive create parameters:', JSON.stringify(createParams, null, 2));
     
@@ -155,8 +157,9 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
       fileId: jsonFile.data.id!,
       requestBody: {
         name: jsonFileName,
-        parents: [accountConfig.driveFolderId],
+        parents: [accountConfig.driveFolderId], // This should be the shared drive ID
       },
+      supportsAllDrives: true, // Enable shared drives
     });
 
     // Create the summary text file if summary exists
@@ -181,6 +184,8 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
           body: summaryContent, // Plain string - no .pipe needed
         },
         uploadType: 'media', // Force simple upload
+        supportsAllDrives: true, // Enable shared drives
+        includeItemsFromAllDrives: true, // Include shared drive items
       };
       console.log('Google Drive summary create parameters:', JSON.stringify(summaryCreateParams, null, 2));
       
@@ -192,8 +197,9 @@ export async function writeSessionToDrive(session: SessionData): Promise<boolean
         fileId: summaryFile.data.id!,
         requestBody: {
           name: summaryFileName,
-          parents: [accountConfig.driveFolderId],
+          parents: [accountConfig.driveFolderId], // This should be the shared drive ID
         },
+        supportsAllDrives: true, // Enable shared drives
       });
     }
 
@@ -218,6 +224,8 @@ export async function readSessionFromDrive(sessionId: string): Promise<SessionDa
       const response = await drive.files.list({
         q: `'${accountConfig.driveFolderId}' in parents and name = '20q-session-${sessionId}.json'`,
         fields: 'files(id, name)',
+        supportsAllDrives: true, // Enable shared drives
+        includeItemsFromAllDrives: true, // Include shared drive items
       });
 
       if (response.data.files && response.data.files.length > 0) {
