@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
 
 interface QuestionTurn {
   question: string;
@@ -40,6 +41,9 @@ export function GoalExecution({ session }: GoalExecutionProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Initialize with the goal context or load existing conversation
   useEffect(() => {
@@ -75,29 +79,14 @@ I'm ready to help you execute this goal. What would you like to start with?`,
     loadConversation();
   }, [session]);
 
-  const handleSendMessage = useCallback(async () => {
-    if (!input.trim() || loading) return;
+  // Auto-focus input after messages update (but not on initial load)
+  useEffect(() => {
+    if (messages.length > 1 && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [messages.length]);
 
-    const userMessage: ExecutionMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-    setError(null);
-
-    // Auto-scroll to bottom when user sends message
-    setTimeout(() => {
-      const container = document.getElementById('conversation-container');
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    }, 100);
-
+  const sendMessageToAI = useCallback(async (userMessageContent: string, currentMessages: ExecutionMessage[]) => {
     try {
       const response = await fetch('/api/20q/execute-goal', {
         method: 'POST',
@@ -106,8 +95,8 @@ I'm ready to help you execute this goal. What would you like to start with?`,
           sessionId: session.id,
           goal: session.goal,
           context: session.finalSummary,
-          conversation: [...messages, userMessage],
-          userMessage: input.trim()
+          conversation: currentMessages,
+          userMessage: userMessageContent
         })
       });
 
@@ -124,7 +113,8 @@ I'm ready to help you execute this goal. What would you like to start with?`,
         timestamp: new Date().toISOString()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const updatedMessages = [...currentMessages, assistantMessage];
+      setMessages(updatedMessages);
 
       // Auto-scroll to bottom
       setTimeout(() => {
@@ -136,7 +126,6 @@ I'm ready to help you execute this goal. What would you like to start with?`,
 
       // Save conversation to GitHub
       try {
-        const updatedMessages = [...messages, userMessage, assistantMessage];
         await fetch('/api/20q/save-conversation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -154,12 +143,54 @@ I'm ready to help you execute this goal. What would you like to start with?`,
         // Don't show error to user for saving failures
       }
 
+      // Reset retry count on success
+      setRetryCount(0);
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
+      const newRetryCount = retryCount + 1;
+      setRetryCount(newRetryCount);
+      
+      if (newRetryCount >= 3) {
+        setError('Failed to get response from AI after 3 attempts');
+        setRetryCount(0);
+      } else {
+        // Auto-retry after a short delay
+        setTimeout(() => {
+          sendMessageToAI(userMessageContent, currentMessages);
+        }, 1000);
+      }
     }
-  }, [input, loading, messages, session]);
+  }, [session, retryCount]);
+
+  const handleSendMessage = useCallback(async () => {
+    if (!input.trim() || loading) return;
+
+    const userMessage: ExecutionMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
+      timestamp: new Date().toISOString()
+    };
+
+    const messageContent = input.trim();
+    setLastUserMessage(messageContent);
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+    setError(null);
+
+    // Auto-scroll to bottom when user sends message
+    setTimeout(() => {
+      const container = document.getElementById('conversation-container');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 100);
+
+    // Send message to AI
+    await sendMessageToAI(messageContent, [...messages, userMessage]);
+    setLoading(false);
+  }, [input, loading, messages, sendMessageToAI]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -170,6 +201,16 @@ I'm ready to help you execute this goal. What would you like to start with?`,
 
   return (
     <div className="space-y-6">
+      {/* Header with Back Button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">Goal Execution</h2>
+        <Link href="/20q/conversations">
+          <Button variant="outline" size="sm">
+            ← Back to Conversations
+          </Button>
+        </Link>
+      </div>
+
       {/* Goal Summary Card */}
       <Card>
         <CardHeader>
@@ -237,12 +278,27 @@ I'm ready to help you execute this goal. What would you like to start with?`,
 
           {error && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm">{error}</p>
+              <p className="text-red-800 text-sm mb-2">{error}</p>
+              {lastUserMessage && (
+                <Button 
+                  onClick={() => {
+                    setError(null);
+                    setLoading(true);
+                    sendMessageToAI(lastUserMessage, messages);
+                    setLoading(false);
+                  }}
+                  size="sm"
+                  variant="outline"
+                >
+                  Retry Last Message
+                </Button>
+              )}
             </div>
           )}
 
           <div className="mt-4 flex space-x-2">
             <Textarea
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
