@@ -41,21 +41,38 @@ export function GoalExecution({ session }: GoalExecutionProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize with the goal context
+  // Initialize with the goal context or load existing conversation
   useEffect(() => {
-    const initialMessage: ExecutionMessage = {
-      id: 'goal-context',
-      role: 'assistant',
-      content: `I'm here to help you work on your goal. Based on the 20 Questions session, I understand that you want to:
+    const loadConversation = async () => {
+      try {
+        // Try to load existing conversation from GitHub
+        const response = await fetch(`/api/20q/conversations/${session.id}`);
+        if (response.ok) {
+          const conversation = await response.json();
+          setMessages(conversation.messages || []);
+          return;
+        }
+      } catch (err) {
+        console.log('No existing conversation found, starting new one');
+      }
+
+      // If no existing conversation, start with initial message
+      const initialMessage: ExecutionMessage = {
+        id: 'goal-context',
+        role: 'assistant',
+        content: `I'm here to help you work on your goal. Based on the 20 Questions session, I understand that you want to:
 
 **Goal:** ${session.goal}
 
 **Context:** ${session.finalSummary || 'No additional context provided.'}
 
 I'm ready to help you execute this goal. What would you like to start with?`,
-      timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString()
+      };
+      setMessages([initialMessage]);
     };
-    setMessages([initialMessage]);
+
+    loadConversation();
   }, [session]);
 
   const handleSendMessage = useCallback(async () => {
@@ -100,6 +117,26 @@ I'm ready to help you execute this goal. What would you like to start with?`,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Save conversation to GitHub
+      try {
+        const updatedMessages = [...messages, userMessage, assistantMessage];
+        await fetch('/api/20q/save-conversation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: session.id,
+            goal: session.goal,
+            context: session.finalSummary,
+            messages: updatedMessages,
+            createdAt: session.createdAt,
+            updatedAt: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.error('Failed to save conversation:', err);
+        // Don't show error to user for saving failures
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

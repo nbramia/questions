@@ -316,15 +316,24 @@ export default function TwentyQuestionsPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            20 Questions
-          </h1>
-          <p className="text-gray-600">
-            {session.goalConfirmed 
-              ? `Goal: ${session.goal}`
-              : 'Let\'s understand your goal through a series of questions.'
-            }
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                20 Questions
+              </h1>
+              <p className="text-gray-600">
+                {session.goalConfirmed 
+                  ? `Goal: ${session.goal}`
+                  : 'Let\'s understand your goal through a series of questions.'
+                }
+              </p>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" asChild>
+                <a href="/20q/conversations">View Conversations</a>
+              </Button>
+            </div>
+          </div>
           <div className="mt-4">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
               <span>Progress</span>
