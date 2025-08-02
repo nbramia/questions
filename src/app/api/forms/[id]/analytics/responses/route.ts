@@ -7,8 +7,11 @@ export async function GET(
   try {
     const { id: formId } = await params;
 
+    // Get the base URL from the request
+    const baseUrl = request.nextUrl.origin;
+    
     // Fetch form config first to understand the structure
-    const configResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/forms/${formId}`);
+    const configResponse = await fetch(`${baseUrl}/api/forms/${formId}`);
     if (!configResponse.ok) {
       return NextResponse.json(
         { error: 'Form not found' },
