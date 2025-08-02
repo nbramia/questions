@@ -52,7 +52,7 @@ export function GoalExecution({ session }: GoalExecutionProps) {
           setMessages(conversation.messages || []);
           return;
         }
-      } catch (err) {
+      } catch {
         console.log('No existing conversation found, starting new one');
       }
 

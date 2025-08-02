@@ -71,8 +71,8 @@ export async function GET(req: Request, { params }: PageProps) {
           { status: 500 }
         );
       }
-    } catch (error: any) {
-      if (error.status === 404) {
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'status' in error && error.status === 404) {
         return NextResponse.json(
           { error: 'Conversation not found' },
           { status: 404 }

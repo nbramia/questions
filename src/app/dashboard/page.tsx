@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [authenticated, setAuthenticated] = useState(false);
   const [forms, setForms] = useState<FormInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingResponses, setLoadingResponses] = useState(false);
+  // const [loadingResponses, setLoadingResponses] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("recent-response");
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
         setLoading(false);
         
         // Load response data in the background
-        setLoadingResponses(true);
+        // setLoadingResponses(true);
         const formsWithResponses = await Promise.all(
           formsData.map(async (form: FormInfo) => {
             try {
@@ -81,12 +81,12 @@ export default function AdminDashboard() {
         
         // Update forms with response data when it's ready
         setForms(formsWithResponses);
-        setLoadingResponses(false);
+        // setLoadingResponses(false);
       } else {
         setError("Failed to fetch forms");
         setLoading(false);
       }
-    } catch (err) {
+    } catch {
       setError("Error loading forms");
       setLoading(false);
     }
@@ -257,32 +257,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const getResponseInfo = (totalResponses?: number, lastResponseAt?: string) => {
-    if (totalResponses === undefined || totalResponses === 0) {
-      return "No responses yet";
-    }
+  // const getResponseInfo = (totalResponses?: number, lastResponseAt?: string) => {
+  //   if (totalResponses === undefined || totalResponses === 0) {
+  //     return "No responses yet";
+  //   }
     
-    const responseText = totalResponses === 1 ? "response" : "responses";
-    let info = `${totalResponses} ${responseText}`;
+  //   const responseText = totalResponses === 1 ? "response" : "responses";
+  //   let info = `${totalResponses} ${responseText}`;
     
-    if (lastResponseAt) {
-      const lastResponse = new Date(lastResponseAt);
-      const now = new Date();
-      const diffMs = now.getTime() - lastResponse.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  //   if (lastResponseAt) {
+  //     const lastResponse = new Date(lastResponseAt);
+  //     const now = new Date();
+  //     const diffMs = now.getTime() - lastResponse.getTime();
+  //     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  //     const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       
-      if (diffDays > 0) {
-        info += ` • Last response ${diffDays}d ago`;
-      } else if (diffHours > 0) {
-        info += ` • Last response ${diffHours}h ago`;
-      } else {
-        info += ` • Last response <1h ago`;
-      }
-    }
+  //     if (diffDays > 0) {
+  //       info += ` • Last response ${diffDays}d ago`;
+  //     } else if (diffHours > 0) {
+  //       info += ` • Last response ${diffHours}h ago`;
+  //     } else {
+  //       info += ` • Last response <1h ago`;
+  //     }
+  //   }
     
-    return info;
-  };
+  //   return info;
+  // };
 
   // Filter and sort forms
   const filteredAndSortedForms = forms

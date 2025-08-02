@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       repo,
       commit_sha: latestCommitSha
     });
-    const baseTree = commitData.tree.sha;
+    // const baseTree = commitData.tree.sha;
 
     // Create the conversation file content
     const conversationContent = {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       if ('sha' in existingFile) {
         existingFileSha = existingFile.sha;
       }
-    } catch (error) {
+    } catch {
       // File doesn't exist, which is fine for new conversations
     }
 

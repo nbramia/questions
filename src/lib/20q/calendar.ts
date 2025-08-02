@@ -1,14 +1,6 @@
 import { google } from 'googleapis';
 import { determineAccountContext } from '../storage/drive';
 
-interface QuestionTurn {
-  question: string;
-  answer: string;
-  rationale?: string;
-  confidenceAfter?: number;
-  type: 'text' | 'likert' | 'choice';
-}
-
 interface StructuredEvent {
   title: string;
   time: string;

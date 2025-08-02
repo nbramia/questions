@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { GoalExecution } from '@/components/20q/GoalExecution';
 
@@ -34,13 +33,13 @@ export default function GoalExecutionPage({ params }: PageProps) {
   const [session, setSession] = useState<SessionState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSession = async () => {
       try {
         const { sessionId: id } = await params;
-        setSessionId(id);
+        // setSessionId(id);
         
         // Load session from localStorage
         const sessionData = localStorage.getItem(`20q-session-${id}`);

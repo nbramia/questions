@@ -1,24 +1,14 @@
 import { NextResponse } from 'next/server';
 
-interface QuestionTurn {
-  question: string;
-  answer: string;
-  rationale?: string;
-  confidenceAfter?: number;
-  type: 'text' | 'likert' | 'choice';
-}
+// interface QuestionTurn {
+//   question: string;
+//   answer: string;
+//   rationale?: string;
+//   confidenceAfter?: number;
+//   type: 'text' | 'likert' | 'choice';
+// }
 
-interface SessionState {
-  id: string;
-  createdAt: string;
-  goal: string;
-  goalConfirmed: boolean;
-  turns: QuestionTurn[];
-  finalSummary?: string;
-  status: 'in-progress' | 'completed';
-  userStopped?: boolean;
-  savedAt?: string;
-}
+// SessionState interface removed as it's not used in this file
 
 interface PageProps {
   params: Promise<{

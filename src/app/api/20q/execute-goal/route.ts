@@ -15,9 +15,9 @@ interface ExecuteGoalRequest {
   userMessage: string;
 }
 
-interface ExecuteGoalResponse {
-  response: string;
-}
+// interface ExecuteGoalResponse {
+//   response: string;
+// }
 
 export async function POST(req: Request) {
   try {
@@ -76,7 +76,7 @@ INSTRUCTIONS:
         messages: [
           {
             role: 'system',
-            content: 'You are an AI agent that helps execute goals established through 20 Questions sessions. Be proactive, helpful, and focused on making progress toward the goal. This is conversational, like a text message thread. Keep your questions and responses very concise and short.'
+            content: 'You are an AI agent that helps execute goals established through 20 Questions sessions. Be proactive, helpful, and focused on making progress toward the goal. This is conversational, like a text message thread. Keep your questions and responses very concise and short. No message should be longer than three sentences. Keep it extremely short. Never ask multiple questions in a single message.'
           },
           {
             role: 'user',
