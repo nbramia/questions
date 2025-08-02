@@ -60,9 +60,9 @@ INSTRUCTIONS:
 - Do one thing at a time. Don't try to inject multiple different actions, questions, or suggestions into a single response. This is like a text message thread where you should be really concise
 - Be encouraging and supportive
 - Focus on making progress toward the goal; always bring it back to the next thing that will help you make the most progress toward that goal.
+- No message should be longer than three sentences. Keep it extremely short. Never ask multiple questions in a single message.
 - If you need to contact someone or schedule something, mention that you can send a Telegram notification
-
-Respond in a helpful, actionable way that moves the goal forward.`;
+`;
 
     // Call OpenAI API
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {

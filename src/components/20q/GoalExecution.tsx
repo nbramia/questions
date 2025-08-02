@@ -90,6 +90,14 @@ I'm ready to help you execute this goal. What would you like to start with?`,
     setLoading(true);
     setError(null);
 
+    // Auto-scroll to bottom when user sends message
+    setTimeout(() => {
+      const container = document.getElementById('conversation-container');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 100);
+
     try {
       const response = await fetch('/api/20q/execute-goal', {
         method: 'POST',
@@ -117,6 +125,14 @@ I'm ready to help you execute this goal. What would you like to start with?`,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        const container = document.getElementById('conversation-container');
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }, 100);
 
       // Save conversation to GitHub
       try {
@@ -186,7 +202,7 @@ I'm ready to help you execute this goal. What would you like to start with?`,
           <CardTitle>Goal Execution Conversation</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+          <div className="space-y-4 max-h-[600px] overflow-y-auto" id="conversation-container">
             {messages.map((message) => (
               <div
                 key={message.id}
