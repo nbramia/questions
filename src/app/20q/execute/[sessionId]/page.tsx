@@ -37,20 +37,21 @@ export default function GoalExecutionPage({ params }: PageProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const loadSession = async () => {
       try {
         const { sessionId: id } = await params;
         setSessionId(id);
         
-        const response = await fetch(`/api/20q/session/${id}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            notFound();
-          }
-          throw new Error('Failed to fetch session');
+        // Load session from localStorage
+        const sessionData = localStorage.getItem(`20q-session-${id}`);
+        if (!sessionData) {
+          setError('Session not found in browser storage');
+          setLoading(false);
+          return;
         }
-        const data = await response.json();
-        setSession(data);
+        
+        const session = JSON.parse(sessionData);
+        setSession(session);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load session');
       } finally {
@@ -58,7 +59,7 @@ export default function GoalExecutionPage({ params }: PageProps) {
       }
     };
 
-    fetchSession();
+    loadSession();
   }, [params]);
 
   if (loading) {

@@ -163,15 +163,12 @@ export default function TwentyQuestionsPage() {
       };
       setSession(completedSession);
       
-      // Save the completed session to Google Drive
+      // Save the completed session to localStorage
       try {
-        await fetch('/api/20q/save-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(completedSession)
-        });
+        localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+        console.log('Completed session saved to localStorage:', completedSession.id);
       } catch (err) {
-        console.error('Failed to save session:', err);
+        console.error('Failed to save completed session to localStorage:', err);
       }
       return;
     }
@@ -221,15 +218,12 @@ export default function TwentyQuestionsPage() {
             };
             setSession(completedSession);
             
-            // Save the completed session to Google Drive
+            // Save the completed session to localStorage
             try {
-              await fetch('/api/20q/save-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(completedSession)
-              });
+              localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+              console.log('Completed session saved to localStorage:', completedSession.id);
             } catch (err) {
-              console.error('Failed to save session:', err);
+              console.error('Failed to save completed session to localStorage:', err);
             }
           } else {
             // Fallback if summary generation fails
@@ -242,15 +236,12 @@ export default function TwentyQuestionsPage() {
             };
             setSession(completedSession);
             
-            // Save the completed session to Google Drive
+            // Save the completed session to localStorage
             try {
-              await fetch('/api/20q/save-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(completedSession)
-              });
+              localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+              console.log('Completed session saved to localStorage:', completedSession.id);
             } catch (err) {
-              console.error('Failed to save session:', err);
+              console.error('Failed to save completed session to localStorage:', err);
             }
           }
         } catch (err) {
@@ -264,15 +255,12 @@ export default function TwentyQuestionsPage() {
           };
           setSession(completedSession);
           
-          // Save the completed session to Google Drive
+          // Save the completed session to localStorage
           try {
-            await fetch('/api/20q/save-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(completedSession)
-            });
+            localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+            console.log('Completed session saved to localStorage:', completedSession.id);
           } catch (err) {
-            console.error('Failed to save session:', err);
+            console.error('Failed to save completed session to localStorage:', err);
           }
         }
       } else {
@@ -303,18 +291,15 @@ export default function TwentyQuestionsPage() {
     }
   }, [generateNextQuestion]);
 
-  // Auto-save session periodically
+  // Auto-save session to localStorage periodically
   useEffect(() => {
     if (session.turns.length > 0) {
-      const saveSession = async () => {
+      const saveSession = () => {
         try {
-          await fetch('/api/20q/save-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(session)
-          });
+          localStorage.setItem(`20q-session-${session.id}`, JSON.stringify(session));
+          console.log('Session saved to localStorage:', session.id);
         } catch (err) {
-          console.error('Failed to save session:', err);
+          console.error('Failed to save session to localStorage:', err);
         }
       };
 
@@ -407,15 +392,12 @@ export default function TwentyQuestionsPage() {
                     };
                     setSession(completedSession);
                     
-                    // Save the completed session to Google Drive
+                    // Save the completed session to localStorage
                     try {
-                      await fetch('/api/20q/save-session', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(completedSession)
-                      });
+                      localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+                      console.log('Completed session saved to localStorage:', completedSession.id);
                     } catch (err) {
-                      console.error('Failed to save session:', err);
+                      console.error('Failed to save completed session to localStorage:', err);
                     }
                   } else {
                     // Fallback if summary generation fails
@@ -428,15 +410,12 @@ export default function TwentyQuestionsPage() {
                     };
                     setSession(completedSession);
                     
-                    // Save the completed session to Google Drive
+                    // Save the completed session to localStorage
                     try {
-                      await fetch('/api/20q/save-session', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(completedSession)
-                      });
+                      localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+                      console.log('Completed session saved to localStorage:', completedSession.id);
                     } catch (err) {
-                      console.error('Failed to save session:', err);
+                      console.error('Failed to save completed session to localStorage:', err);
                     }
                   }
                 } catch (err) {
@@ -450,15 +429,12 @@ export default function TwentyQuestionsPage() {
                   };
                   setSession(completedSession);
                   
-                  // Save the completed session to Google Drive
+                  // Save the completed session to localStorage
                   try {
-                    await fetch('/api/20q/save-session', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(completedSession)
-                    });
+                    localStorage.setItem(`20q-session-${completedSession.id}`, JSON.stringify(completedSession));
+                    console.log('Completed session saved to localStorage:', completedSession.id);
                   } catch (err) {
-                    console.error('Failed to save session:', err);
+                    console.error('Failed to save completed session to localStorage:', err);
                   }
                 } finally {
                   setLoading(false);

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
 import { QuestionCard } from '@/components/20q/QuestionCard';
 import { SessionSummary } from '@/components/20q/SessionSummary';
 
@@ -40,19 +39,16 @@ export default function CompletedSessionPage({ params }: PageProps) {
       try {
         const { id } = await params;
         
-        const response = await fetch(`/api/20q/session/${id}`, {
-          cache: 'no-store'
-        });
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            notFound();
-          }
-          throw new Error('Failed to load session');
+        // Load session from localStorage
+        const sessionData = localStorage.getItem(`20q-session-${id}`);
+        if (!sessionData) {
+          setError('Session not found in browser storage');
+          setLoading(false);
+          return;
         }
         
-        const sessionData = await response.json();
-        setSession(sessionData);
+        const session = JSON.parse(sessionData);
+        setSession(session);
       } catch (err) {
         console.error('Error loading session:', err);
         setError(err instanceof Error ? err.message : 'Failed to load session');
