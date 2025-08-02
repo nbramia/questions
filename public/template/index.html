@@ -259,10 +259,10 @@
             const buttonContainer = document.createElement("div");
             buttonContainer.className = "flex gap-3 flex-wrap items-center";
             
-            // Rephrase button
+            // Rephrase button (hidden initially)
             const rephraseBtn = document.createElement("button");
             rephraseBtn.type = "button";
-            rephraseBtn.className = "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
+            rephraseBtn.className = "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hidden";
             rephraseBtn.setAttribute("aria-label", "Rephrase text for anonymity");
             rephraseBtn.innerHTML = `
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -303,6 +303,28 @@
               Rephrasing...
             `;
             loadingIndicator.style.display = 'none'; // Start hidden
+            
+            // Function to update button visibility based on text content
+            function updateButtonVisibility() {
+              const hasText = input.value.trim().length > 0;
+              const hasBeenRephrased = refreshBtn.classList.contains('hidden') === false;
+              
+              if (hasText && !hasBeenRephrased) {
+                // Show rephrase button when there's text and it hasn't been rephrased yet
+                rephraseBtn.classList.remove('hidden');
+                refreshBtn.classList.add('hidden');
+                undoBtn.classList.add('hidden');
+              } else if (!hasText) {
+                // Hide all buttons when there's no text
+                rephraseBtn.classList.add('hidden');
+                refreshBtn.classList.add('hidden');
+                undoBtn.classList.add('hidden');
+              }
+              // If hasBeenRephrased is true, keep refresh and undo buttons visible
+            }
+            
+            // Add input event listener to control button visibility
+            input.addEventListener('input', updateButtonVisibility);
             
             // Rephrase functionality
             rephraseBtn.addEventListener('click', async function() {
@@ -423,9 +445,8 @@
             undoBtn.addEventListener('click', function() {
               if (originalText) {
                 input.value = originalText;
-                rephraseBtn.classList.remove('hidden');
-                refreshBtn.classList.add('hidden');
-                undoBtn.classList.add('hidden');
+                // Reset to original state and update button visibility
+                updateButtonVisibility();
               }
             });
             
