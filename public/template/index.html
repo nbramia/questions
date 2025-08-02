@@ -20,15 +20,15 @@
       
       /* Rephrase button styles */
       .rephrase-btn {
-        @apply px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+        @apply inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
       }
       
       .refresh-btn {
-        @apply px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-2;
+        @apply inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
       }
       
       .undo-btn {
-        @apply px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-2;
+        @apply inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
       }
     </style>
   </head>
@@ -257,25 +257,27 @@
             
             // Create button container
             const buttonContainer = document.createElement("div");
-            buttonContainer.className = "flex gap-2 flex-wrap";
+            buttonContainer.className = "flex gap-3 flex-wrap items-center";
             
             // Rephrase button
             const rephraseBtn = document.createElement("button");
             rephraseBtn.type = "button";
             rephraseBtn.className = "rephrase-btn";
+            rephraseBtn.setAttribute("aria-label", "Rephrase text for anonymity");
             rephraseBtn.innerHTML = `
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Rephrase (extra anonymity)
+              Rephrase
             `;
             
             // Refresh button (hidden initially)
             const refreshBtn = document.createElement("button");
             refreshBtn.type = "button";
             refreshBtn.className = "refresh-btn hidden";
+            refreshBtn.setAttribute("aria-label", "Try another rephrase");
             refreshBtn.innerHTML = `
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               Try Again
@@ -285,8 +287,9 @@
             const undoBtn = document.createElement("button");
             undoBtn.type = "button";
             undoBtn.className = "undo-btn hidden";
+            undoBtn.setAttribute("aria-label", "Undo and restore original text");
             undoBtn.innerHTML = `
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
               Undo
@@ -294,12 +297,10 @@
             
             // Loading indicator
             const loadingIndicator = document.createElement("div");
-            loadingIndicator.className = "px-4 py-2 text-gray-600 text-sm font-medium rounded-md bg-gray-100 hidden";
+            loadingIndicator.className = "inline-flex items-center gap-2 px-4 py-2 text-gray-600 text-sm font-medium rounded-lg bg-gray-100 border border-gray-200 hidden";
             loadingIndicator.innerHTML = `
-              <div class="flex items-center gap-2">
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                Rephrasing...
-              </div>
+              <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600"></div>
+              Rephrasing...
             `;
             
             // Rephrase functionality
@@ -338,7 +339,8 @@
                 const data = await response.json();
                 input.value = data.rephrasedText;
                 
-                // Show refresh and undo buttons
+                // Hide rephrase button and show refresh and undo buttons
+                rephraseBtn.classList.add('hidden');
                 refreshBtn.classList.remove('hidden');
                 undoBtn.classList.remove('hidden');
                 
@@ -419,6 +421,7 @@
             undoBtn.addEventListener('click', function() {
               if (originalText) {
                 input.value = originalText;
+                rephraseBtn.classList.remove('hidden');
                 refreshBtn.classList.add('hidden');
                 undoBtn.classList.add('hidden');
               }
